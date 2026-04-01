@@ -1,0 +1,20 @@
+razorpay
+razorpay-cli
+
+/bin
+/tmp
+/.tools
+/.go
+/.push-*
+/.container-*
+/.dockerfile-*
+/.licenses*
+/.buildx-initialized
+.aider*
+
+# Docker volumes and data
+/db_data
+/docker-volumes
+
+# Generated RPC files (generated from proto source files via buf)
+/rpc
