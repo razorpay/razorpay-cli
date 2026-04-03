@@ -1,197 +1,154 @@
-# Go Foundation v2 - Golang Service Template
+# Razorpay CLI
 
-A production-ready Golang service template for Razorpay developers. This template provides a standardized foundation for building microservices following Domain-Driven Design (DDD) principles.
+A command-line interface for the [Razorpay API](https://razorpay.com/docs/api/). Interact with payments, orders, customers, refunds, settlements, and disputes directly from your terminal.
 
-## What's Included
-
-- Complete service architecture with gRPC and HTTP endpoints
-- Protocol Buffers integration with automatic code generation
-- Database integration with migrations and health checks
-- Containerized build system using Docker and Make
-- CI/CD workflows with GitHub Actions
-- Production-ready patterns (logging, metrics, error handling)
-- Example user service demonstrating best practices
-
-## Prerequisites
-
-- Go 1.25+
-- Docker and Docker Compose
-- Git with access to Razorpay repositories
-- Make utility
-
-## Quick Start
-
-### 1. Review Documentation First
-
-Before making any changes, it's highly recommended that you review the [documentation](docs/README.md) to understand the Foundation framework and how services should be modeled. Start with the [Example Service](docs/example-service.md) to see the architecture in action.
-
-### 2. Clone and Rename
+## Installation
 
 ```bash
-# Rename the service
-make rename NAME=my-new-service
+go install github.com/razorpay/razorpay-cli@latest
 ```
 
-The `make rename` command updates:
-- Go module path in `go.mod`
-- Import statements in all `.go` files
-- Git remote origin URL
+### Prerequisites
 
-### 3. Update Dependencies
+- Go 1.21 or later
+
+### Install from source
 
 ```bash
-# Update Go dependencies
-go mod tidy
-
-# Verify everything builds
-make build
+git clone https://github.com/razorpay/razorpay-cli.git
+cd razorpay-cli
+go build -o razorpay .
 ```
 
-### 4. Configure Protocol Buffers
-
-Proto source files are committed to the repository for version control and reproducibility. You only need to fetch and generate when updating to newer proto versions:
+Move the binary somewhere on your `PATH`:
 
 ```bash
-# Fetch latest proto files from central repository (when you need updates)
-make proto-fetch
-
-# Generate Go code from proto files (automatically done in Docker builds)
-make proto-generate
-
-# Commit the updated proto files
-git add proto/
-git commit -m "chore: update proto files"
+mv razorpay /usr/local/bin/razorpay
 ```
 
-**Note:** Docker builds automatically generate RPC code from committed proto files - no manual proto-fetch needed for building!
-
-### 5. Post-Rename Configuration
-
-Manually update these files with service-specific values:
-- `.github/workflows/*.yaml` - Update image names and repository references
-- `Dockerfile.*` - Update any hardcoded references
-- `Makefile` - Update `BINS` and `IMAGE_PREFIX` variables
-
-## Essential Commands
-
-### Build and Test
+### Install with `go install`
 
 ```bash
-# Build locally (faster for development)
-make build ENV=local
-
-# Build using Docker (default for CI/CD)
-make build
-
-# Run tests
-make test ENV=local
-
-# Lint code
-make lint ENV=local
+go install github.com/razorpay/razorpay-cli@latest
 ```
 
-### Proto Management
+## Configuration
+
+### Interactive setup
+
+Run the configure command and enter your API Key ID and Key Secret when prompted. The key secret input is masked.
 
 ```bash
-# Fetch latest proto files (updates proto/ directory)
-make proto-fetch
-
-# Generate Go code from protos (creates rpc/ directory)
-make proto-generate
-
-# Lint proto files
-make proto-lint
-
-# Complete proto refresh (fetch + generate)
-make proto-refresh
-
-# Commit proto updates to version control
-git add proto/
-git commit -m "chore: update proto files"
+razorpay configure
 ```
 
-**Important:** Proto source files (`proto/`) are committed to git for reproducibility. Generated code (`rpc/`) is excluded from git and auto-generated during builds.
+Credentials are saved to `~/.razorpay/config.yaml`.
 
-### Docker Commands
+### Environment variables
+
+Set credentials via environment variables to override the config file. This is useful in CI/CD environments.
 
 ```bash
-# Run services locally
-docker-compose up
-
-# Build and push Docker images
-make push
+export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 ```
 
-## Project Structure
+You can generate API keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/app/website-app-settings/api-keys). Use `rzp_test_` keys for development and `rzp_live_` keys for production.
 
-```
-cmd/                      # Service entry points
-├── user/                # Example user service
-└── user_migration/      # Database migration tool
+## Hello World
 
-internal/                # Private application code
-└── user/               # Example domain logic
-    ├── server.go       # gRPC server implementation
-    ├── handler.go      # Handler registration
-    ├── service/        # Business logic layer
-    ├── repo/           # Data access layer
-    ├── model/          # Domain models
-    └── migrations/     # Database migrations
+The following walkthrough creates an order and then fetches it back. These are the two most fundamental operations in the Razorpay payment flow.
 
-config/                  # Configuration files
-proto/                   # Protocol buffer definitions (committed)
-rpc/                     # Generated proto code (auto-generated, not committed)
-scripts/                 # Build system makefiles
+### Step 1 -- Configure credentials
+
+```bash
+razorpay configure
+# Key ID: rzp_test_xxxxxxxxxxxx
+# Key Secret: (hidden)
+# Credentials saved to /Users/you/.razorpay/config.yaml
 ```
 
-## Key Makefile Targets
+### Step 2 -- Create an order
 
-Update these variables in the root `Makefile`:
+An order represents a payment intent. Amounts are always in the smallest currency unit (paise for INR).
 
-```makefile
-BINS ?= user user_migration    # Your service binaries
-IMAGE_PREFIX ?= fnd-           # Docker image prefix
+```bash
+razorpay orders create --amount 5000 --currency INR --receipt "order-001"
 ```
 
-Common targets:
-- `make build` - Build binaries
-- `make test` - Run tests
-- `make lint` - Lint code
-- `make clean` - Clean artifacts
-- `make help` - Show all targets
+Expected output:
+
+```json
+{
+  "id": "order_RB58MiP5SPFYyM",
+  "entity": "order",
+  "amount": 5000,
+  "amount_paid": 0,
+  "amount_due": 5000,
+  "currency": "INR",
+  "receipt": "order-001",
+  "status": "created",
+  "attempts": 0,
+  "created_at": 1756455561
+}
+```
+
+### Step 3 -- Fetch the order
+
+Use the `id` from the previous response to fetch the order.
+
+```bash
+razorpay orders fetch order_RB58MiP5SPFYyM
+```
+
+### Step 4 -- List recent payments
+
+Once a customer completes payment against the order, it appears in the payments list.
+
+```bash
+razorpay payments list --count 5
+```
+
+## Available Commands
+
+| Command                                 | Description                              |
+| --------------------------------------- | ---------------------------------------- |
+| `razorpay configure`                    | Save API credentials to config file      |
+| `razorpay payments list`                | List payments                            |
+| `razorpay payments fetch <id>`          | Fetch a payment by ID                    |
+| `razorpay payments capture <id>`        | Capture an authorized payment            |
+| `razorpay payments update <id>`         | Update payment metadata                  |
+| `razorpay payments transfers <id>`      | Fetch transfers for a payment            |
+| `razorpay orders list`                  | List orders                              |
+| `razorpay orders fetch <id>`            | Fetch an order by ID                     |
+| `razorpay orders create`                | Create a new order                       |
+| `razorpay orders update <id>`           | Update an order                          |
+| `razorpay orders payments <id>`         | Fetch payments for an order              |
+| `razorpay customers list`               | List customers                           |
+| `razorpay customers fetch <id>`         | Fetch a customer by ID                   |
+| `razorpay customers create`             | Create a new customer                    |
+| `razorpay customers update <id>`        | Update a customer                        |
+| `razorpay refunds list`                 | List refunds                             |
+| `razorpay refunds fetch <id>`           | Fetch a refund by ID                     |
+| `razorpay refunds create <payment_id>`  | Create a refund for a payment            |
+| `razorpay refunds update <id>`          | Update a refund                          |
+| `razorpay settlements list`             | List settlements                         |
+| `razorpay settlements fetch <id>`       | Fetch a settlement by ID                 |
+| `razorpay settlements recon`            | Fetch settlement recon report            |
+| `razorpay disputes list`                | List disputes                            |
+| `razorpay disputes fetch <id>`          | Fetch a dispute by ID                    |
+| `razorpay disputes accept <id>`         | Accept a dispute                         |
+| `razorpay disputes contest <id>`        | Contest a dispute                        |
+
+Run `razorpay [command] --help` for flags and usage details on any command.
 
 ## Documentation
 
-Detailed documentation is available in the `docs/` directory:
+Detailed usage guides for each resource are in the [docs/](docs/) directory.
 
-- **[Example Service](docs/example-service.md)** - Architecture and patterns of the included User Service
-- **[Migration Guide](docs/migration-guide.md)** - Step-by-step guide to transition from example to your custom service
-- **[Best Practices](docs/best-practices.md)** - Coding standards and architectural guidelines
-- **[Build System](docs/build-system.md)** - Makefile structure and Docker build process
-- **[Proto Management](docs/proto-management.md)** - Protocol Buffers workflow and central repository integration
-
-## GitHub Actions Workflows
-
-The template includes automated CI/CD workflows:
-
-- **Build Workflow**: Multi-architecture builds, Docker image publishing
-- **Lint Workflow**: Code formatting and linting checks
-- **Security Workflows**: Automated security scanning
-
-After renaming your service, update workflow files in `.github/workflows/` with your service name and image references.
-
-## Additional Resources
-
-- [Razorpay Go Style Guide](https://github.com/razorpay/styleguide/blob/master/go/style.md)
-- [Foundation Library Documentation](https://github.com/razorpay/foundation)
-- [Proto Repository](https://github.com/razorpay/proto)
-
-## Acknowledgments
-
-This template builds upon:
-- [upi-switch](https://github.com/razorpay/upi-switch/) - Foundation patterns
-- [thockin/go-build-template](https://github.com/thockin/go-build-template) - Build system inspiration
-
----
-
-For questions or support, reach out to the Developer Experience Engineering team on slack [(#developer-experience)](https://razorpay.enterprise.slack.com/archives/C08DS8AE7T8)
+- [Payments](docs/payments.md)
+- [Orders](docs/orders.md)
+- [Customers](docs/customers.md)
+- [Refunds](docs/refunds.md)
+- [Settlements](docs/settlements.md)
+- [Disputes](docs/disputes.md)
