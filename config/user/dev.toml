@@ -1,0 +1,17 @@
+[databases.primary_db.connection]
+  dialect = "postgres"
+  protocol = "tcp"
+  url = "localhost"
+  port = 5432
+  username = "example"
+  password = "example_pass"
+  sslmode = "disable"
+  name = "example"
+  schema = "public"
+  charset = "utf8"
+
+[databases.primary_db.connection_pool]
+  maxopenconnections = 25
+  maxidleconnections = 10
+  connectionmaxlifetime = 300
+  connectionmaxidletime = 60

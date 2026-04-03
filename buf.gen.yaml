@@ -1,0 +1,28 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/razorpay/go-foundation-v2/rpc
+  # Don't modify any file option or field option for protovalidate. Without
+  # this, generated Go will fail to compile.
+  disable:
+    - file_option: go_package
+      module: buf.build/bufbuild/protovalidate
+    - file_option: go_package
+      module: buf.build/googleapis/googleapis
+inputs:
+  - directory: proto
+plugins:
+  - local: protoc-gen-go
+    out: rpc
+    opt:
+      - paths=source_relative
+  - local: protoc-gen-go-grpc
+    out: rpc
+    opt:
+      - paths=source_relative
+  - local: protoc-gen-grpc-gateway
+    out: rpc
+    opt:
+      - paths=source_relative

@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Go Foundation V2 Example Service
+  # Metrics endpoint exposed on port 8082 (internal server from default.toml)
+  - job_name: 'go-foundation-v2-example'
+    static_configs:
+      - targets: ['host.docker.internal:8082']  # If your app runs on host machine
+        labels:
+          service: 'example_service'
+          namespace: 'go-foundation-v2'
+    scrape_interval: 10s
+    metrics_path: '/metrics'
+    scrape_timeout: 5s
+
+  # Alternative: If you run your app as a Docker service, uncomment and modify:
+  # - job_name: 'go-foundation-v2-docker'
+  #   static_configs:
+  #     - targets: ['your-app-service:8082']  # Replace with your service name
+  #       labels:
+  #         service: 'example_service'
+  #         namespace: 'go-foundation-v2'
+  #   scrape_interval: 10s
+  #   metrics_path: '/metrics'

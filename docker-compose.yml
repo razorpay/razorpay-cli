@@ -1,0 +1,115 @@
+services:
+  # PostgreSQL Database Service
+  postgres:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: example
+      POSTGRES_USER: example
+      POSTGRES_PASSWORD: example_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U example -d example"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PostgreSQL Replica Database Service
+  postgres_replica:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: postgres:15-alpine
+    container_name: postgres_replica_db
+    environment:
+      POSTGRES_DB: example_replica
+      POSTGRES_USER: example
+      POSTGRES_PASSWORD: example_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U example -d example_replica"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Prometheus Metrics Collector Service
+  prometheus:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.devstack
+      ssh:
+        - default # Enable build-time SSH agent forwarding for private Go modules
+      args:
+        REGISTRY: harbor.razorpay.com/razorpay
+        ARG_BIN: user
+    container_name: user-service
+    volumes:
+      - .:/src
+      - /src/.tools # Anonymous volume preserves container-built tools (prevents host .tools from overwriting)
+    ports:
+      - "8080:8080" # gRPC port
+      - "8081:8081" # HTTP gateway port
+      - "8082:8082" # Internal metrics port
+      - "2345:2345" # Delve debugger (devstack)
+    environment:
+      - WORKDIR=/src
+    networks:
+      - app-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres_replica:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Optional: Grafana for visualization
+  grafana:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  postgres_replica_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  app-network:
+    driver: bridge

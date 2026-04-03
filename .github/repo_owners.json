@@ -1,0 +1,12 @@
+{
+    "ownership": {
+        "type": "Team Specific",
+        "business_unit": "Platforms",
+        "group": "POD Velocity",
+        "sub_group": "POD Velocity",
+        "pod": "Developer Experience",
+        "engineering_manager": {
+            "email": "saurabh.dixit@razorpay.com"
+        }
+    }
+}

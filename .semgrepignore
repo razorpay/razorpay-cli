@@ -1,0 +1,5 @@
+.gitignore
+.semgrepignore
+pkg/registry/
+cmd/loadgen/
+cmd/loadgen/go.mod

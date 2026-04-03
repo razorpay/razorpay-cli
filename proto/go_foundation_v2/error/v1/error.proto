@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package go_foundation_v2.error.v1;
+
+option go_package = "go_foundation_v2/error/v1;errorv1";
+
+// Error represents an error response with detailed information
+message Error {
+  string code                  = 1;
+  string description           = 2;
+  string step                  = 3;
+  string reason                = 4;
+  string field                 = 5;
+  string source                = 6;
+  map<string, string> metadata = 7;
+  string action                = 8;
+}

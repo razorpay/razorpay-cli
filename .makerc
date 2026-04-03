@@ -1,0 +1,4 @@
+# Make configuration to suppress override warnings
+export MAKEFLAGS="--no-print-directory" 
+export MAKEFLAGS += --no-builtin-rules
+export MAKEFLAGS += --warn-undefined-variables

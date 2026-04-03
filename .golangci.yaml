@@ -1,0 +1,80 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - asciicheck
+    - bodyclose
+    - copyloopvar
+    - errcheck
+    - forcetypeassert
+    - gocyclo
+    - gocritic
+    - gosec
+    - govet
+    - iface
+    - ineffassign
+    - interfacebloat
+    - lll
+    - makezero
+    - misspell
+    - revive
+    - staticcheck
+    - unused
+  settings:
+    gocyclo:
+      min-complexity: 15
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+    iface:
+      enable:
+        - opaque
+        - identical
+    interfacebloat:
+      max: 5
+    lll:
+      line-length: 100
+      tab-width: 1
+    revive:
+      rules:
+        - name: blank-imports
+          disabled: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)\.go$
+        text: should have a package comment
+      - path: (.+)\.go$
+        text: 'unused-parameter:'
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - goimports
+    - golines
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/razorpay/goutils)
+        - prefix(github.com/razorpay/go-foundation-v2)
+      custom-order: true
+    golines:
+      max-len: 100
+      reformat-tags: false
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

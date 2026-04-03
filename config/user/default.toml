@@ -1,0 +1,154 @@
+[errors]
+  # List of services for which error mapping is enabled
+  mappings = [] # e.g. ["go-foundation-v2"]
+
+# Database Configuration
+# Each database is now a key under the [databases] table.
+[databases.primary_db]
+  debug = true                     # Enable debug logging for database operations
+  [databases.primary_db.connection]
+    dialect = "postgres"              # Database dialect: postgres, mysql, sqlite
+    protocol = "tcp"                  # Connection protocol
+    url = "postgres"                  # Database server URL (Docker service name from docker-compose.yml)
+    port = 5432                       # Database server port
+    username = "example"              # Database username
+    password = "example_pass"         # Database password
+    sslmode = "disable"               # SSL mode: disable, require, verify-full
+    name = "example"                  # Database name to connect to
+    schema = "public"                 # Default database schema
+    charset = "utf8"                  # Character set for the connection
+  [databases.primary_db.connection_pool]
+    maxopenconnections = 25         # Maximum number of open connections
+    maxidleconnections = 10         # Maximum number of idle connections
+    connectionmaxlifetime = 300           # Maximum connection lifetime in seconds
+    connectionmaxidletime = 60           # Maximum connection idle time in seconds
+
+# Replica Database Configuration
+# [databases.replica_db]
+#   debug = true                     # Enable debug logging for database operations
+#   [databases.replica_db.connection]
+#     dialect = "postgres"              # Database dialect: postgres, mysql, sqlite
+#     protocol = "tcp"                  # Connection protocol
+#     url = "postgres_replica"          # Database server URL (Docker service name from docker-compose.yml)
+#     port = 5432                       # Database server port (inside container, postgres always uses 5432)
+#     username = "example"              # Database username
+#     password = "example_pass"         # Database password
+#     sslmode = "disable"              # SSL mode: disable, require, verify-full
+#     name = "example_replica"          # Database name to connect to (replica database)
+#     schema = "public"                 # Default database schema
+#     charset = "utf8"                  # Character set for the connection
+#   [databases.replica_db.connection_pool]
+#     maxopenconnections = 25         # Maximum number of open connections
+#     maxidleconnections = 10         # Maximum number of idle connections
+#     connectionmaxlifetime = 300           # Maximum connection lifetime in seconds
+#     connectionmaxidletime = 60           # Maximum connection idle time in seconds
+
+# gRPC Server Configuration
+[grpc_server]
+  shutdown_timeout = "30s"            # Maximum duration to wait for graceful shutdown
+  # Server addresses configuration
+  [grpc_server.server_addresses]
+    grpc = ":8080"                    # gRPC server address and port
+    http = ":8081"                    # HTTP gateway server address and port
+    internal = ":8082"                # Internal metrics server address and port
+  # Interceptor configuration
+  [grpc_server.interceptor]
+    header_filters = [                # Headers to filter or process
+      "authorization",
+      "x-request-id",
+      "user-agent"
+    ]
+    additional_forwarded_headers = [  # Extra HTTP headers forwarded to gRPC metadata
+      "x-idempotency-key",
+      "x-merchant-id"
+    ]
+    # Access log interceptor configuration
+    [grpc_server.interceptor.accesslog]
+      enable_log = true               # Enable access logging
+      log_level = "DEBUG"             # Log level: error, warn, info, debug
+      request_headers = [             # Request headers to capture in logs
+        "request-id",
+        "authorization",
+        "content-type",
+        "user-agent",
+        "x-forwarded-for"
+      ]
+
+    # Credentials map: username -> passwords array
+    # Each username is a key, and the value is an array of 1-2 passwords
+    # (1-2 passwords are supported for password rotation scenarios)
+    [grpc_server.interceptor.basic_auth]
+      enabled = false                   # Enable basic authentication
+      [grpc_server.interceptor.basic_auth.credentials]
+        "ticker" = ["ticker_secret_from_env"]
+
+  # Passport (authentication) interceptor configuration
+  [grpc_server.interceptor.passport]
+    enabled = false                   # Enable passport authentication
+    jwks_host = ""                    # JWKS endpoint URL (required when enabled)
+    connection_timeout = "1s"         # Timeout for JWKS HTTP requests
+    max_retries = 3                   # Maximum number of retry attempts
+    retry_delay = "100ms"             # Delay between retry attempts
+
+# Telemetry Configuration
+[telemetry]
+  # Logger configuration
+  [telemetry.logger]
+    level = "DEBUG"                     # Log level: DEBUG, INFO, WARN, ERROR (defaults to ERROR)
+    add_source = true                   # Include source code location in logs
+    add_stack_trace_at = "ERROR"        # Record stack trace for messages at or above this level
+    caller_skip_count = 0               # Number of callers to skip for source attribution (defaults to 0)
+    enabled = true                      # Whether the logger is functional or acts as no-op (defaults to true)
+    secure_fields = [                   # Field names that should be treated as secure
+      "password",
+      "token",
+      "authorization",
+      "secret",
+      "key"
+    ]
+    # Masking options for field redaction functionality
+    [telemetry.logger.mask_options]
+      redact_fields = [                 # Exact field names to completely redact
+        "password",
+        "token",
+        "secret",
+        "private_key",
+        "auth_token",
+        "isfc_code"
+      ]
+      redact_field_prefixes = [         # Field name prefixes to redact
+        "pass",
+        "auth",
+        "secret",
+        "token"
+      ]
+  # Metrics configuration
+  [telemetry.metrics]
+    enabled = true                      # Enable metrics collection and export
+    exporter = "prometheus"             # Metrics exporter: prometheus, otlp, jaeger, console
+    namespace = "foundation_app"        # Namespace prefix for all metrics
+    service_name = "foundation_service" # Service name for metric labels
+
+    # Exponential buckets configuration for histograms
+    [telemetry.metrics.exponential_buckets]
+      start = 1.0                       # Starting value for first bucket boundary
+      factor = 2.0                      # Multiplication factor between buckets
+      count = 10                        # Total number of bucket boundaries
+
+# Health Check Configuration
+[health_check]
+  # Maximum goroutine count check
+  [health_check.max_goroutine_count]
+    count = 500                         # Maximum allowed goroutines
+    optional = false                    # Whether this check is optional
+  # Garbage collection pause check
+  [health_check.gc_max_pause]
+    max_pause = "10s"                   # Maximum allowed GC pause duration
+    optional = false                    # Whether this check is optional
+
+[worker]
+  disabled = true  # This service does not use workers
+
+[aws]
+  region = "ap-south-1"
+  s3_bucket = "random_bucket"
