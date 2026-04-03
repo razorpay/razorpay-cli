@@ -1,12 +1,12 @@
 {
-    "ownership": {
-        "type": "Team Specific",
-        "business_unit": "Platforms",
-        "group": "POD Velocity",
-        "sub_group": "POD Velocity",
-        "pod": "Developer Experience",
-        "engineering_manager": {
-            "email": "saurabh.dixit@razorpay.com"
-        }
+  "ownership": {
+    "type": "Team Specific",
+    "business_unit": "Platforms",
+    "group": "Razorpay1",
+    "sub_group": "Razorpay1",
+    "pod": "Razorpay1",
+    "engineering_manager": {
+      "email": "prabu.ram@razorpay.com"
     }
+  }
 }
