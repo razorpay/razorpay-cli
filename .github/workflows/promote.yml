@@ -1,0 +1,99 @@
+name: Promote to Production
+
+# Triggered manually from the GitHub Actions UI.
+# Copies already-validated artifacts from non-prod S3 to prod S3 — no rebuild, no new tag.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to promote (e.g. v1.2.3) — must already exist in non-prod S3'
+        required: true
+
+jobs:
+  promote:
+    name: Promote ${{ github.event.inputs.version }} to prod S3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure non-prod AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Download artifacts from non-prod S3
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION_NUM="${VERSION#v}"
+          NONPROD_BUCKET="${{ secrets.AWS_S3_BUCKET }}"
+          REGION="${{ secrets.AWS_REGION }}"
+
+          mkdir -p dist/
+
+          # Download versioned artifacts
+          aws s3 sync \
+            s3://${NONPROD_BUCKET}/razorpay-cli/${VERSION}/ \
+            dist/ \
+            --region ${REGION}
+
+          # Download install.sh
+          aws s3 cp \
+            s3://${NONPROD_BUCKET}/razorpay-cli/install.sh \
+            dist/install.sh \
+            --region ${REGION}
+
+          echo "Downloaded artifacts:"
+          ls -lh dist/
+
+      - name: Configure prod AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.PROD_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.PROD_AWS_REGION }}
+
+      - name: Upload artifacts to prod S3
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION_NUM="${VERSION#v}"
+          PROD_BUCKET="${{ secrets.PROD_AWS_S3_BUCKET }}"
+          PROD_REGION="${{ secrets.PROD_AWS_REGION }}"
+
+          # Upload versioned folder
+          aws s3 sync \
+            dist/ \
+            s3://${PROD_BUCKET}/razorpay-cli/${VERSION}/ \
+            --region ${PROD_REGION} \
+            --exclude "install.sh"
+
+          # Write version marker
+          echo "${VERSION}" | aws s3 cp - \
+            s3://${PROD_BUCKET}/razorpay-cli/latest \
+            --content-type text/plain \
+            --region ${PROD_REGION}
+
+          # Upload install.sh
+          aws s3 cp \
+            dist/install.sh \
+            s3://${PROD_BUCKET}/razorpay-cli/install.sh \
+            --content-type text/x-shellscript \
+            --region ${PROD_REGION}
+
+          # Copy to latest/ folder with version stripped from filenames
+          # macOS
+          aws s3 cp dist/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${PROD_REGION}
+
+          # Linux
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_x86_64.tar.gz   --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.tar.gz    --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_amd64.deb       --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.deb       --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_amd64.rpm       --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.rpm       --region ${PROD_REGION}
+
+          # Windows
+          aws s3 cp dist/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_windows_x86_64.zip    --region ${PROD_REGION}
+          aws s3 cp dist/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${PROD_BUCKET}/razorpay-cli/latest/razorpay_windows_i386.zip      --region ${PROD_REGION}
+
+          echo "Promotion complete: ${VERSION} is now live in prod."

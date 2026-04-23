@@ -1,0 +1,81 @@
+version: 2
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+project_name: razorpay
+
+builds:
+  - id: razorpay-windows-amd64
+    binary: razorpay
+    main: .
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos:
+      - windows
+    goarch:
+      - amd64
+
+  - id: razorpay-windows-386
+    binary: razorpay
+    main: .
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos:
+      - windows
+    goarch:
+      - "386"
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - docs/install.md
+
+checksum:
+  name_template: "{{ .ProjectName }}-windows-checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+snapshot:
+  version_template: "{{ .Version }}-next"
+
+release:
+  disable: true
+
+blobs:
+  - provider: s3
+    region: <YOUR_AWS_REGION>
+    bucket: <YOUR_S3_BUCKET>
+    folder: "razorpay-cli/{{ .Version }}"
+
