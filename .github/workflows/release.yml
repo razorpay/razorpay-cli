@@ -14,6 +14,9 @@ jobs:
   release-mac:
     name: Release (macOS)
     runs-on: macos-latest
+    permissions:
+      id-token: write   # required for OIDC token request
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,6 +26,12 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
 
       - name: Run GoReleaser (mac)
         uses: goreleaser/goreleaser-action@v6
@@ -32,9 +41,6 @@ jobs:
           args: release --config .goreleaser/mac.yml --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
 
 # ---------------------------------------------------------------------------
 # Linux — binary archives + .deb + .rpm packages
@@ -42,6 +48,9 @@ jobs:
   release-linux:
     name: Release (Linux)
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,6 +60,12 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
 
       - name: Run GoReleaser (linux)
         uses: goreleaser/goreleaser-action@v6
@@ -60,9 +75,6 @@ jobs:
           args: release --config .goreleaser/linux.yml --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
 
 # ---------------------------------------------------------------------------
 # Windows — binary zip archives
@@ -70,6 +82,9 @@ jobs:
   release-windows:
     name: Release (Windows)
     runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,6 +95,12 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
       - name: Run GoReleaser (windows)
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -88,9 +109,6 @@ jobs:
           args: release --config .goreleaser/windows.yml --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
 
 # ---------------------------------------------------------------------------
 # Write latest version marker to S3 — runs after all platform jobs succeed
@@ -99,44 +117,49 @@ jobs:
     name: Publish latest marker and install script
     runs-on: ubuntu-latest
     needs: [release-mac, release-linux, release-windows]
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
 
       - name: Write latest file and install script to S3
         run: |
           VERSION="${GITHUB_REF_NAME}"
           VERSION_NUM="${VERSION#v}"
-          BUCKET="${{ secrets.AWS_S3_BUCKET }}"
-          REGION="${{ secrets.AWS_REGION }}"
+          BUCKET="rzp-1018-nonprod-betasite.razorpay.com"
+          REGION="ap-south-1"
 
           # Write version marker and install script
           echo "${VERSION}" | aws s3 cp - \
-            s3://${BUCKET}/razorpay-cli/latest \
+            s3://${BUCKET}/cli/latest \
             --content-type text/plain \
             --region ${REGION}
 
           aws s3 cp install.sh \
-            s3://${BUCKET}/razorpay-cli/install.sh \
+            s3://${BUCKET}/cli/install.sh \
             --content-type text/x-shellscript \
             --region ${REGION}
 
           # Copy versioned artifacts to latest/ folder with version stripped from filename
           # macOS
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/razorpay-cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/razorpay-cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION}
 
           # Linux
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_amd64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_amd64.rpm       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/razorpay-cli/latest/razorpay_linux_arm64.rpm       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION}
 
           # Windows
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/razorpay-cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/razorpay-cli/${VERSION}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/razorpay-cli/latest/razorpay_windows_i386.zip      --region ${REGION}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION}

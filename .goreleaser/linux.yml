@@ -72,9 +72,9 @@ release:
 
 blobs:
   - provider: s3
-    region: <YOUR_AWS_REGION>
-    bucket: <YOUR_S3_BUCKET>
-    folder: "razorpay-cli/{{ .Version }}"
+    region: ap-south-1
+    bucket: rzp-1018-nonprod-betasite.razorpay.com
+    folder: "cli/{{ .Version }}"
 
 nfpms:
   - id: deb
