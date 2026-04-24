@@ -161,17 +161,17 @@ jobs:
 
           # Copy versioned artifacts to latest/ folder with version stripped from filename
           # macOS
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION}
 
           # Linux
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION}
 
           # Windows
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION}

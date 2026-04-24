@@ -26,6 +26,7 @@ jobs:
       - name: Download artifacts from non-prod S3
         run: |
           VERSION="${{ github.event.inputs.version }}"
+          VERSION_NUM="${VERSION#v}"
           NONPROD_BUCKET="rzp-1018-nonprod-betasite.razorpay.com"
           REGION="ap-south-1"
 
@@ -33,14 +34,8 @@ jobs:
 
           # Download versioned artifacts
           aws s3 sync \
-            s3://${NONPROD_BUCKET}/cli/${VERSION}/ \
+            s3://${NONPROD_BUCKET}/cli/${VERSION_NUM}/ \
             dist/ \
-            --region ${REGION}
-
-          # Download install.sh
-          aws s3 cp \
-            s3://${NONPROD_BUCKET}/cli/install.sh \
-            dist/install.sh \
             --region ${REGION}
 
           echo "Downloaded artifacts:"
@@ -59,12 +54,11 @@ jobs:
           PROD_BUCKET="${{ secrets.PROD_AWS_S3_BUCKET }}"
           PROD_REGION="${{ secrets.PROD_AWS_REGION }}"
 
-          # Upload versioned folder
+          # Upload versioned folder (includes install.sh)
           aws s3 sync \
             dist/ \
-            s3://${PROD_BUCKET}/cli/${VERSION}/ \
-            --region ${PROD_REGION} \
-            --exclude "install.sh"
+            s3://${PROD_BUCKET}/cli/${VERSION_NUM}/ \
+            --region ${PROD_REGION}
 
           # Write version marker
           echo "${VERSION}" | aws s3 cp - \
@@ -72,10 +66,10 @@ jobs:
             --content-type text/plain \
             --region ${PROD_REGION}
 
-          # Upload install.sh
+          # Upload install.sh to latest/
           aws s3 cp \
             dist/install.sh \
-            s3://${PROD_BUCKET}/cli/install.sh \
+            s3://${PROD_BUCKET}/cli/latest/install.sh \
             --content-type text/x-shellscript \
             --region ${PROD_REGION}
 
