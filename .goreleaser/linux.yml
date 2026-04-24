@@ -74,7 +74,7 @@ blobs:
   - provider: s3
     region: ap-south-1
     bucket: rzp-1018-nonprod-betasite.razorpay.com
-    folder: "cli/{{ .Version }}"
+    directory: "cli/{{ .Version }}"
 
 nfpms:
   - id: deb
