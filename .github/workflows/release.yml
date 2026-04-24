@@ -38,9 +38,10 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/mac.yml --clean --snapshot
+          args: release --config .goreleaser/mac.yml --clean --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
 
 # ---------------------------------------------------------------------------
 # Linux — binary archives + .deb + .rpm packages
@@ -72,9 +73,10 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/linux.yml --clean --snapshot
+          args: release --config .goreleaser/linux.yml --clean --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
 
 # ---------------------------------------------------------------------------
 # Windows — binary zip archives
@@ -106,9 +108,10 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/windows.yml --clean --snapshot
+          args: release --config .goreleaser/windows.yml --clean --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
 
 # ---------------------------------------------------------------------------
 # Write latest version marker to S3 — runs after all platform jobs succeed
