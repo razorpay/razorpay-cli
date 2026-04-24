@@ -3,9 +3,8 @@ name: Release (non-prod)
 # To promote a validated version to prod, run the "Promote to Production" workflow manually.
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 # ---------------------------------------------------------------------------
@@ -39,7 +38,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/mac.yml --clean
+          args: release --config .goreleaser/mac.yml --clean --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,7 +72,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/linux.yml --clean
+          args: release --config .goreleaser/linux.yml --clean --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -107,7 +106,7 @@ jobs:
         with:
           distribution: goreleaser
           version: "~> v2"
-          args: release --config .goreleaser/windows.yml --clean
+          args: release --config .goreleaser/windows.yml --clean --snapshot
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
