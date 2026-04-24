@@ -150,7 +150,12 @@ jobs:
             --region ${REGION}
 
           aws s3 cp install.sh \
-            s3://${BUCKET}/cli/install.sh \
+            s3://${BUCKET}/cli/${VERSION_NUM}/install.sh \
+            --content-type text/x-shellscript \
+            --region ${REGION}
+
+          aws s3 cp install.sh \
+            s3://${BUCKET}/cli/latest/install.sh \
             --content-type text/x-shellscript \
             --region ${REGION}
 

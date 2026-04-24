@@ -46,7 +46,7 @@ echo "Latest version: $VERSION"
 # Download and extract
 # ---------------------------------------------------------------------------
 ARCHIVE="${BINARY}_${VERSION#v}_${OS_NAME}_${ARCH_NAME}.tar.gz"
-URL="${S3_BASE_URL}/${VERSION}/${ARCHIVE}"
+URL="${S3_BASE_URL}/${VERSION#v}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 
 echo "Downloading $ARCHIVE..."
