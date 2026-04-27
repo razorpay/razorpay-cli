@@ -5,6 +5,9 @@ name: Release (non-prod)
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 # ---------------------------------------------------------------------------
