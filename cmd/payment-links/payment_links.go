@@ -2,7 +2,7 @@ package paymentlinks
 
 import "github.com/spf13/cobra"
 
-const basePath = "/payment_links"
+const basePath = "/v1/payment_links"
 
 var Cmd = &cobra.Command{
 	Use:   "payment-links",

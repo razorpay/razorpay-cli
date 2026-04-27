@@ -3,8 +3,8 @@ package route
 import "github.com/spf13/cobra"
 
 const (
-	transfersPath = "/transfers"
-	accountsPath  = "/v2/accounts" // Route linked accounts use the v2 API
+	transfersPath = "/v1/transfers"
+	accountsPath  = "/v2/accounts"
 )
 
 var Cmd = &cobra.Command{

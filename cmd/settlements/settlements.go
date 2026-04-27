@@ -3,7 +3,7 @@ package settlements
 import "github.com/spf13/cobra"
 
 const (
-	basePath     = "/settlements"
+	basePath     = "/v1/settlements"
 	ondemandPath = basePath + "/ondemand"
 	reconPath    = basePath + "/recon/combined"
 )

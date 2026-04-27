@@ -2,7 +2,7 @@ package qrcodes
 
 import "github.com/spf13/cobra"
 
-const basePath = "/payments/qr_codes"
+const basePath = "/v1/payments/qr_codes"
 
 var Cmd = &cobra.Command{
 	Use:   "qr-codes",

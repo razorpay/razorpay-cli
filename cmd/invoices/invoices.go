@@ -3,8 +3,8 @@ package invoices
 import "github.com/spf13/cobra"
 
 const (
-	basePath  = "/invoices"
-	itemsPath = "/items"
+	basePath  = "/v1/invoices"
+	itemsPath = "/v1/items"
 )
 
 var Cmd = &cobra.Command{

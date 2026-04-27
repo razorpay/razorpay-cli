@@ -3,8 +3,8 @@ package subscriptions
 import "github.com/spf13/cobra"
 
 const (
-	basePath  = "/subscriptions"
-	plansPath = "/plans"
+	basePath  = "/v1/subscriptions"
+	plansPath = "/v1/plans"
 )
 
 var Cmd = &cobra.Command{

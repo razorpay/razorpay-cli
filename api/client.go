@@ -14,19 +14,24 @@ import (
 	"time"
 )
 
-const baseURL = "https://api.razorpay.com/v1"
-const apiRoot = "https://api.razorpay.com"
+const defaultBaseURL = "https://api.razorpay.com"
 
 type Client struct {
 	keyID     string
 	keySecret string
+	baseURL   string
 	http      *http.Client
 }
 
 func New(keyID, keySecret string) *Client {
+	base := os.Getenv("RAZORPAY_BASE_URL")
+	if base == "" {
+		base = defaultBaseURL
+	}
 	return &Client{
 		keyID:     keyID,
 		keySecret: keySecret,
+		baseURL:   base,
 		http:      &http.Client{Timeout: 30 * time.Second},
 	}
 }
@@ -47,12 +52,7 @@ func (c *Client) doWithHeaders(method, path string, body interface{}, query url.
 		return nil, err
 	}
 
-	// Paths that start with /v2/ need the bare API root instead of /v1 base.
-	base := baseURL
-	if strings.HasPrefix(path, "/v2/") {
-		base = apiRoot
-	}
-	u := base + path
+	u := c.baseURL + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
 	}
@@ -153,7 +153,7 @@ func (c *Client) PostMultipart(path string, filePath string, fields map[string]s
 	}
 	w.Close()
 
-	req, err := http.NewRequest(http.MethodPost, baseURL+path, &buf)
+	req, err := http.NewRequest(http.MethodPost, c.baseURL+path, &buf)
 	if err != nil {
 		return nil, err
 	}
