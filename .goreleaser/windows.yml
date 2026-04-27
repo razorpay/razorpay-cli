@@ -50,8 +50,7 @@ archives:
       - goos: windows
         formats: [zip]
     files:
-      - README.md
-      - docs/install.md
+      - none*
 
 checksum:
   name_template: "{{ .ProjectName }}-windows-checksums.txt"

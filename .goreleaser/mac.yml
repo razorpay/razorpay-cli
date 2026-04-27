@@ -47,8 +47,7 @@ archives:
       {{- else if eq .Arch "arm64" }}arm64
       {{- else }}{{ .Arch }}{{ end }}
     files:
-      - README.md
-      - docs/install.md
+      - none*
 
 checksum:
   name_template: "{{ .ProjectName }}-mac-checksums.txt"
