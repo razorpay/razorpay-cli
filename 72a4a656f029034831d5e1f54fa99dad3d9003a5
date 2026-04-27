@@ -1,0 +1,30 @@
+api/client.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:25:10.375Z 17,22,27-30,34,55,156
+cmd/customers/customers.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/disputes/disputes.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/documents/documents.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/invoices/invoices.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 6-7
+cmd/orders/orders.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/payment-links/payment_links.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/payments/payments.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/qr-codes/qr_codes.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/refunds/refunds.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/route/route.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 6-7
+cmd/settlements/settlements.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 6
+cmd/smart-collect/smart_collect.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 5
+cmd/subscriptions/subscriptions.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z 6-7
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:25:10.375Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 9, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-27T12:19:51.023Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}}}
