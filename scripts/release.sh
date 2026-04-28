@@ -10,7 +10,8 @@ if ! git diff-index --quiet HEAD --; then
     exit 1
 fi
 
-git pull origin master
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+git pull origin "${current_branch}"
 
 last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "(none)")
 echo "Last release: ${last_tag}"
@@ -95,7 +96,8 @@ fi
 git add CHANGELOG.md
 git commit -m "chore: release ${version}"
 git tag "${version}"
-git push origin master --follow-tags
+git push origin "${current_branch}"
+git push origin "${version}"
 
 echo ""
 echo "Released ${version} successfully."
