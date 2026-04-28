@@ -141,7 +141,7 @@ jobs:
             VERSION="v0.0.0-next"
           fi
           VERSION_NUM="${VERSION#v}"
-          BUCKET="rzp-1018-nonprod-betasite.razorpay.com"
+          BUCKET="rzp-1415-prod-docs-website"
           REGION="ap-south-1"
 
           # Write version marker and install script
