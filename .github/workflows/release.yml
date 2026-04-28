@@ -1,10 +1,8 @@
-name: Release (non-prod)
+name: Release
 # Builds binaries and uploads them to the non-prod S3 bucket.
 # To promote a validated version to prod, run the "Promote to Production" workflow manually.
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   push:
     tags:
       - 'v*'
@@ -178,3 +176,8 @@ jobs:
           # Windows
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION}
+
+          # Checksums
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION}

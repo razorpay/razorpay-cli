@@ -71,8 +71,9 @@ if [ ! -f CHANGELOG.md ]; then
     } > "${tmpchangelog}"
 else
     {
+        printf "# Changelog\n\n"
         printf "## %s — %s\n\n%s\n\n" "${version}" "${date}" "${notes}"
-        cat CHANGELOG.md
+        tail -n +3 CHANGELOG.md
     } > "${tmpchangelog}"
 fi
 
