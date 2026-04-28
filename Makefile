@@ -67,12 +67,9 @@ ci: build test lint go-mod-tidy
 .PHONY: ci
 
 # Tag and push a new release — actual binaries are built by CI (see .github/workflows/release.yml)
+# Opens $EDITOR for changelog entry, writes CHANGELOG.md, commits, tags, and pushes.
 release:
-	git pull origin master
-	@echo "Last release: $$(git describe --tags --abbrev=0 2>/dev/null || echo '(none)')"
-	@read -p "Enter new version (format: vN.N.N): " version; \
-	git tag $$version; \
-	git push --tags
+	@bash scripts/release.sh
 .PHONY: release
 
 # Clean all build artefacts
