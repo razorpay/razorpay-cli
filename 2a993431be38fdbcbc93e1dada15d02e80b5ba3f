@@ -1,0 +1,6 @@
+Makefile
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:05:06.080Z 70,72
+scripts/release.sh
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:03:42.008Z 1-2,4,6,8-11,13,15-17,19,21,23-26,28-31,33,35-36,38-46,48,50,52-53,55-58,60,62-64,66-76,78,80-84,86-91,93,95-98,100-102
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:05:06.080Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 2, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:03:42.008Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 77, "overriden_lines": 0}}}
