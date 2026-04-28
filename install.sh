@@ -3,7 +3,7 @@ set -euo pipefail
 
 BINARY="razorpay"
 INSTALL_DIR="/usr/local/bin"
-S3_BASE_URL="https://rzp-1018-nonprod-betasite.razorpay.com.s3.ap-south-1.amazonaws.com/cli"
+S3_BASE_URL="https://razorpay.com/cli/latest/install.sh"
 
 # ---------------------------------------------------------------------------
 # Detect OS and architecture

@@ -72,7 +72,7 @@ release:
 blobs:
   - provider: s3
     region: ap-south-1
-    bucket: rzp-1018-nonprod-betasite.razorpay.com
+    bucket: rzp-1415-prod-docs-website
     directory: "cli/{{ .Version }}"
 
 nfpms:
