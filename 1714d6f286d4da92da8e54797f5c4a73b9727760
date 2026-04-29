@@ -1,0 +1,28 @@
+cmd/disputes/accept.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:30:55.590Z 15
+cmd/refunds/create.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:40:53.490Z 19,44-51,67
+cmd/refunds/payment_refund.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:41:01.020Z 15
+cmd/refunds/payment_refunds.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:41:06.932Z 31
+cmd/route/refund_reversal.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 34
+cmd/route/transfer_fetch_by_order.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 23
+cmd/route/transfer_fetch_by_payment.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 15
+cmd/route/transfer_from_order.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 69
+cmd/route/transfer_from_payment.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 59
+cmd/smart-collect/fetch_bank_transfer.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 15
+cmd/smart-collect/fetch_upi_payment.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 15
+cmd/smart-collect/fetch_utr.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z 30
+cmd/subscriptions/invoices.go
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T14:33:55.765Z 26
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:30:55.590Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:40:53.490Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 10, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:41:01.020Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T12:41:06.932Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T13:26:41.018Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T14:33:55.765Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}}}
