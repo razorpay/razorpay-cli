@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1 — 2026-04-29
+
+- Added missing version number for the integrated apis.
+
 ## v1.0.0 — 2026-04-28
 
 - Initial release of the Razorpay CLI
