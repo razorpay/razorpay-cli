@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 — 2026-04-29
+
+-Added changes to the release.yml file.
+
 ## v1.0.1 — 2026-04-29
 
 - Added missing version number for the integrated apis.
