@@ -4,13 +4,48 @@ A command-line interface for the [Razorpay API](https://razorpay.com/docs/api/).
 
 ## Installation
 
+### macOS / Linux
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/razorpay/razorpay-cli/master/install.sh | sh
+```
+
+The script detects your OS and architecture, downloads the appropriate binary from the [latest GitHub release](https://github.com/razorpay/razorpay-cli/releases/latest), verifies the SHA-256 checksum, and installs the binary to `~/.local/bin` (or `$XDG_BIN_HOME` if set). Running as root installs to `/usr/local/bin`.
+
+To override the install directory:
+
+```bash
+RAZORPAY_INSTALL=/usr/local/bin curl -fsSL https://raw.githubusercontent.com/razorpay/razorpay-cli/master/install.sh | sh
+```
+
+### Windows
+
+Run the following in PowerShell:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/razorpay/razorpay-cli/master/install.ps1 | iex"
+```
+
+The script downloads the latest release, verifies the checksum, installs to `%USERPROFILE%\.local\bin`, and adds that directory to your user `PATH`.
+
+To override the install directory:
+
+```powershell
+$env:RAZORPAY_INSTALL = "C:\tools\bin"
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/razorpay/razorpay-cli/master/install.ps1 | iex"
+```
+
+### Manual download
+
+Pre-built binaries for all platforms are available on the [releases page](https://github.com/razorpay/razorpay-cli/releases). Download the archive for your platform, extract the `razorpay` binary, and place it somewhere on your `PATH`.
+
+### Install with `go install`
+
 ```bash
 go install github.com/razorpay/razorpay-cli@latest
 ```
 
-### Prerequisites
-
-- Go 1.21 or later
+Requires Go 1.21 or later.
 
 ### Install from source
 
@@ -18,18 +53,7 @@ go install github.com/razorpay/razorpay-cli@latest
 git clone https://github.com/razorpay/razorpay-cli.git
 cd razorpay-cli
 go build -o razorpay .
-```
-
-Move the binary somewhere on your `PATH`:
-
-```bash
 mv razorpay /usr/local/bin/razorpay
-```
-
-### Install with `go install`
-
-```bash
-go install github.com/razorpay/razorpay-cli@latest
 ```
 
 ## Configuration
