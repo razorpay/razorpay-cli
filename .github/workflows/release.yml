@@ -161,23 +161,24 @@ jobs:
             --region ${REGION}
 
           # Copy versioned artifacts to latest/ folder with version stripped from filename
+          # --metadata-directive REPLACE prevents GoReleaser's Content-Disposition (versioned filename) from being inherited
           # macOS
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
 
           # Linux
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION} --metadata-directive REPLACE --content-type application/vnd.debian.binary-package
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION} --metadata-directive REPLACE --content-type application/vnd.debian.binary-package
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION} --metadata-directive REPLACE --content-type application/x-rpm
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION} --metadata-directive REPLACE --content-type application/x-rpm
 
           # Windows
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION} --metadata-directive REPLACE --content-type application/zip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION} --metadata-directive REPLACE --content-type application/zip
 
           # Checksums
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION}
-          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION}
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION} --metadata-directive REPLACE --content-type text/plain
