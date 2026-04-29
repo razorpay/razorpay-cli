@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 — 2026-04-29
+
+-Checking the cloudfront changes and ensuring the correct version for razorpay cli.
+
 ## v1.0.2 — 2026-04-29
 
 -Added changes to the release.yml file.
