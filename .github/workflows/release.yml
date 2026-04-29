@@ -7,6 +7,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      republish_version:
+        description: 'Re-publish a specific version to latest/ (e.g. 1.0.1). Skips build jobs and runs publish-latest only.'
+        required: false
+        default: ''
 
 # ---------------------------------------------------------------------------
 # macOS — binary archives
@@ -120,7 +125,11 @@ jobs:
   publish-latest:
     name: Publish latest marker and install script
     runs-on: ubuntu-latest
-    needs: [release-mac, release-linux, release-windows]
+    needs:
+      - release-mac
+      - release-linux
+      - release-windows
+    if: ${{ always() && (needs.release-mac.result == 'success' || github.event.inputs.republish_version != '') }}
     permissions:
       id-token: write
       contents: read
@@ -135,7 +144,9 @@ jobs:
 
       - name: Write latest file and install script to S3
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
+          if [ -n "${{ github.event.inputs.republish_version }}" ]; then
+            VERSION="v${{ github.event.inputs.republish_version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${GITHUB_REF_NAME}"
           else
             VERSION="v0.0.0-next"
