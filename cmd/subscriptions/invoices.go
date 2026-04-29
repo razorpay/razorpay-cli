@@ -23,7 +23,7 @@ var invoicesCmd = &cobra.Command{
 		if skip, _ := cmd.Flags().GetInt("skip"); skip > 0 {
 			q.Set("skip", fmt.Sprintf("%d", skip))
 		}
-		data, err := client.Get("/invoices", q)
+		data, err := client.Get("/v1/invoices", q)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

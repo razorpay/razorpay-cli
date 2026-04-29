@@ -66,7 +66,7 @@ var transferFromOrderCmd = &cobra.Command{
 			body["receipt"] = receipt
 		}
 
-		data, err := client.Post("/orders", body)
+		data, err := client.Post("/v1/orders", body)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

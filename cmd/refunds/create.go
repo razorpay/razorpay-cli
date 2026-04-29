@@ -16,6 +16,7 @@ var createCmd = &cobra.Command{
 		speed, _ := cmd.Flags().GetString("speed")
 		receipt, _ := cmd.Flags().GetString("receipt")
 		notes, _ := cmd.Flags().GetStringArray("note")
+		idempotencyKey, _ := cmd.Flags().GetString("idempotency-key")
 
 		body := map[string]interface{}{}
 		if amount > 0 {
@@ -39,7 +40,15 @@ var createCmd = &cobra.Command{
 		if len(body) > 0 {
 			reqBody = body
 		}
-		data, err := client.Post("/payments/"+args[0]+"/refund", reqBody)
+
+		var data []byte
+		var err error
+		if idempotencyKey != "" {
+			headers := map[string]string{"X-Refund-Idempotency": idempotencyKey}
+			data, err = client.PostWithHeaders("/v1/payments/"+args[0]+"/refund", reqBody, headers)
+		} else {
+			data, err = client.Post("/v1/payments/"+args[0]+"/refund", reqBody)
+		}
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}
@@ -55,4 +64,5 @@ func init() {
 	createCmd.Flags().String("speed", "", "Refund speed: normal or optimum")
 	createCmd.Flags().String("receipt", "", "Unique identifier for internal reference")
 	createCmd.Flags().StringArray("note", nil, "Note as key=value (repeatable, max 15 pairs)")
+	createCmd.Flags().String("idempotency-key", "", "Idempotency key to prevent duplicate refunds (X-Refund-Idempotency)")
 }

@@ -56,7 +56,7 @@ var transferFromPaymentCmd = &cobra.Command{
 			"transfers": []any{transfer},
 		}
 
-		data, err := client.Post("/payments/"+args[0]+"/transfers", body)
+		data, err := client.Post("/v1/payments/"+args[0]+"/transfers", body)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

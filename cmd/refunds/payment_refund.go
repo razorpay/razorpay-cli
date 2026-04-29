@@ -12,7 +12,7 @@ var paymentRefundCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := cmdutil.NewClient()
-		data, err := client.Get("/payments/"+args[0]+"/refunds/"+args[1], nil)
+		data, err := client.Get("/v1/payments/"+args[0]+"/refunds/"+args[1], nil)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

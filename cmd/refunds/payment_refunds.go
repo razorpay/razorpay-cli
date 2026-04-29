@@ -28,7 +28,7 @@ var paymentRefundsCmd = &cobra.Command{
 		if to, _ := cmd.Flags().GetInt64("to"); to > 0 {
 			q.Set("to", fmt.Sprintf("%d", to))
 		}
-		data, err := client.Get("/payments/"+args[0]+"/refunds", q)
+		data, err := client.Get("/v1/payments/"+args[0]+"/refunds", q)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

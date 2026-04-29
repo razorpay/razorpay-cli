@@ -12,7 +12,7 @@ var fetchBankTransferCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := cmdutil.NewClient()
-		data, err := client.Get("/payments/"+args[0]+"/bank_transfer", nil)
+		data, err := client.Get("/v1/payments/"+args[0]+"/bank_transfer", nil)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

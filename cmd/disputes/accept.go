@@ -12,7 +12,7 @@ var acceptCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := cmdutil.NewClient()
-		data, err := client.Post("/disputes/"+args[0]+"/accept", nil)
+		data, err := client.Post(basePath+"/"+args[0]+"/accept", nil)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

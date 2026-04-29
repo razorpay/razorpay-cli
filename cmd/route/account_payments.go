@@ -15,7 +15,7 @@ var accountPaymentsCmd = &cobra.Command{
 		headers := map[string]string{
 			"X-Razorpay-Account": args[0],
 		}
-		data, err := client.GetWithHeaders("/payments", nil, headers)
+		data, err := client.GetWithHeaders("/v1/payments", nil, headers)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

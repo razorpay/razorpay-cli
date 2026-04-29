@@ -31,7 +31,7 @@ var refundReversalCmd = &cobra.Command{
 			body["notes"] = notesMap
 		}
 
-		data, err := client.Post("/payments/"+args[0]+"/refund", body)
+		data, err := client.Post("/v1/payments/"+args[0]+"/refund", body)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}

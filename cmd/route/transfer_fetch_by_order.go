@@ -20,7 +20,7 @@ var fetchTransfersByOrderCmd = &cobra.Command{
 		if status, _ := cmd.Flags().GetString("status"); status != "" {
 			q.Set("status", status)
 		}
-		data, err := client.Get("/orders/"+args[0], q)
+		data, err := client.Get("/v1/orders/"+args[0], q)
 		if err != nil {
 			cmdutil.HandleErr(err)
 		}
