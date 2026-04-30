@@ -31,7 +31,7 @@ Configure your API keys with:
 
 Then use resource commands like:
   razorpay payments list
-  razorpay orders create --param amount=5000 --param currency=INR`,
+  razorpay orders create --amount 5000 --currency INR`,
 }
 
 // SetVersion stamps the root command with build-time version info injected
