@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.4 — 2026-04-30
+
+Added:
+- Non-interactive razorpay configure --key-id <id> --key-secret <secret>
+Fixed:
+-Incorrect example in razorpay help output
+
 ## v1.0.3 — 2026-04-29
 
 -Checking the cloudfront changes and ensuring the correct version for razorpay cli.
