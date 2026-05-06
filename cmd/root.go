@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/razorpay/razorpay-cli/api"
+	"github.com/razorpay/razorpay-cli/cmd/bills"
 	"github.com/razorpay/razorpay-cli/cmd/cmdutil"
 	"github.com/razorpay/razorpay-cli/cmd/customers"
 	"github.com/razorpay/razorpay-cli/cmd/disputes"
@@ -72,4 +73,5 @@ func init() {
 	rootCmd.AddCommand(subscriptions.Cmd)
 	rootCmd.AddCommand(route.Cmd)
 	rootCmd.AddCommand(smartcollect.Cmd)
+	rootCmd.AddCommand(bills.Cmd)
 }
