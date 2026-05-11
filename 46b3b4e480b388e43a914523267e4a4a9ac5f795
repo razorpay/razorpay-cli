@@ -1,0 +1,6 @@
+docs/install.md
+  1024a434-4d03-4ad7-9532-5a35f4ae60e0:2026-05-11T10:54:02.539Z 14
+install.sh
+  1024a434-4d03-4ad7-9532-5a35f4ae60e0:2026-05-11T10:51:50.797Z 5,48-50,54-63,65,67-71,73-75
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"1024a434-4d03-4ad7-9532-5a35f4ae60e0:2026-05-11T10:54:02.539Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "1024a434-4d03-4ad7-9532-5a35f4ae60e0:2026-05-11T10:51:50.797Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 23, "overriden_lines": 0}}}
