@@ -23,30 +23,39 @@ You can also set credentials via environment variables:
   RAZORPAY_KEY_ID
   RAZORPAY_KEY_SECRET`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		reader := bufio.NewReader(os.Stdin)
+		keyID, _ := cmd.Flags().GetString("key-id")
+		keySecret, _ := cmd.Flags().GetString("key-secret")
 
-		fmt.Print("Key ID: ")
-		keyID, err := reader.ReadString('\n')
-		if err != nil {
-			return err
+		if (keyID != "") != (keySecret != "") {
+			return fmt.Errorf("both --key-id and --key-secret are required")
 		}
-		keyID = strings.TrimSpace(keyID)
 
-		fmt.Print("Key Secret: ")
-		var keySecret string
-		if term.IsTerminal(int(syscall.Stdin)) {
-			b, err := term.ReadPassword(int(syscall.Stdin))
-			fmt.Println()
+		if keyID == "" && keySecret == "" {
+			reader := bufio.NewReader(os.Stdin)
+
+			fmt.Print("Key ID: ")
+			var err error
+			keyID, err = reader.ReadString('\n')
 			if err != nil {
 				return err
 			}
-			keySecret = string(b)
-		} else {
-			keySecret, err = reader.ReadString('\n')
-			if err != nil {
-				return err
+			keyID = strings.TrimSpace(keyID)
+
+			fmt.Print("Key Secret: ")
+			if term.IsTerminal(int(syscall.Stdin)) {
+				b, err := term.ReadPassword(int(syscall.Stdin))
+				fmt.Println()
+				if err != nil {
+					return err
+				}
+				keySecret = string(b)
+			} else {
+				keySecret, err = reader.ReadString('\n')
+				if err != nil {
+					return err
+				}
+				keySecret = strings.TrimSpace(keySecret)
 			}
-			keySecret = strings.TrimSpace(keySecret)
 		}
 
 		if keyID == "" || keySecret == "" {
@@ -60,4 +69,9 @@ You can also set credentials via environment variables:
 		fmt.Printf("Credentials saved to %s\n", config.ConfigFilePath())
 		return nil
 	},
+}
+
+func init() {
+	configureCmd.Flags().String("key-id", "", "Razorpay Key ID (non-interactive mode)")
+	configureCmd.Flags().String("key-secret", "", "Razorpay Key Secret (non-interactive mode)")
 }
