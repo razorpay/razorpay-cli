@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.7 — 2026-05-11
+
+- Removed sudo command from the install.sh script
+
 ## v1.0.6 — 2026-05-11
 
 - install.sh: Fixed broken S3_BASE_URL that caused 404s; simplified to download directly from latest/ folder 

@@ -14,7 +14,7 @@ The script downloads the right tarball for your OS/arch, extracts the `razorpay`
 
 ```bash
 $ razorpay --version
-razorpay version v1.0.6
+razorpay version v1.0.7
 ```
 
 Other options — Homebrew-style manual download, `go install`, building from source — are in [docs/install.md](docs/install.md).
