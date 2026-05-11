@@ -63,8 +63,6 @@ You can also set values via environment variables:
 			return fmt.Errorf("key ID and key secret cannot be empty")
 		}
 
-		// Output format is optional from the user's perspective; we always
-		// resolve to a known value (defaulting to JSON) before saving.
 		outputFormat := strings.ToLower(strings.TrimSpace(configureOutputFormat))
 		if outputFormat == "" {
 			existing := config.OutputFormat()
@@ -72,7 +70,7 @@ You can also set values via environment variables:
 				existing = output.DefaultFormat
 			}
 			label := fmt.Sprintf("Output Format (%s)", strings.Join(output.Names(), ", "))
-			input, err := promptOptional(reader, label, existing)
+			input, err := promptValue(reader, label, existing, false)
 			if err != nil {
 				return err
 			}
@@ -97,8 +95,13 @@ You can also set values via environment variables:
 }
 
 // promptValue renders an AWS-style prompt: `Label [hint]: `. If `secret` is
-// true and stdin is a TTY, input is read without echoing. When the user
-// submits an empty line, the existing value is kept.
+// true and stdin is a TTY, input is read without echoing.
+//
+// Both an empty line and EOF fall back to `existing`. EOF tolerance matters
+// in two scenarios: a non-interactive run that closes stdin after fewer
+// lines than there are prompts (typical of CI / `< file`), and a TTY where
+// the user has already configured creds and wants to keep them by hitting
+// Enter.
 func promptValue(reader *bufio.Reader, label, existing string, secret bool) (string, error) {
 	fmt.Printf("%s [%s]: ", label, maskedHint(existing, secret))
 
@@ -107,35 +110,21 @@ func promptValue(reader *bufio.Reader, label, existing string, secret bool) (str
 		b, err := term.ReadPassword(int(syscall.Stdin))
 		fmt.Println()
 		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return existing, nil
+			}
 			return "", err
 		}
 		input = string(b)
 	} else {
 		line, err := reader.ReadString('\n')
-		if err != nil {
+		if err != nil && !errors.Is(err, io.EOF) {
 			return "", err
 		}
 		input = line
 	}
 
 	input = strings.TrimSpace(input)
-	if input == "" {
-		return existing, nil
-	}
-	return input, nil
-}
-
-// promptOptional is like promptValue (non-secret) but treats EOF the same
-// as an empty line — i.e. keeps the existing value. Used for fields with a
-// sensible default so non-interactive invocations (where stdin is closed
-// after the required prompts) don't error out.
-func promptOptional(reader *bufio.Reader, label, existing string) (string, error) {
-	fmt.Printf("%s [%s]: ", label, maskedHint(existing, false))
-	line, err := reader.ReadString('\n')
-	if err != nil && !errors.Is(err, io.EOF) {
-		return "", err
-	}
-	input := strings.TrimSpace(line)
 	if input == "" {
 		return existing, nil
 	}
