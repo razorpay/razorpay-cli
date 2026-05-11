@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.6 — 2026-05-11
+
+- install.sh: Fixed broken S3_BASE_URL that caused 404s; simplified to download directly from latest/ folder 
+- docs/install.md: Rewrote to match production docs structure with curl commands, quick-install one-liner, macOS quarantine step, and credential configuration
+
 ## v1.0.5 — 2026-05-11
 
 - Enhance make release flow with auto-generated notes and version bump
