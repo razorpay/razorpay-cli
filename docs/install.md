@@ -11,7 +11,7 @@ To install the Razorpay CLI, you must complete the following actions:
 
 ### Quick Install (macOS and Linux)
 
-Run the install script to automatically detect your OS and architecture, download the latest binary, and install it to `/usr/local/bin`:
+Run the install script to automatically detect your OS and architecture, download the latest binary, and install it to `~/.local/bin`:
 
 ```bash
 curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
