@@ -2,36 +2,41 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"syscall"
 
 	"github.com/razorpay/razorpay-cli/config"
+	"github.com/razorpay/razorpay-cli/output"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
 
 var (
-	configureKeyID     string
-	configureKeySecret string
+	configureKeyID        string
+	configureKeySecret    string
+	configureOutputFormat string
 )
 
 var configureCmd = &cobra.Command{
 	Use:   "configure",
 	Short: "Configure Razorpay API credentials",
-	Long: `Configure your Razorpay API Key ID and Key Secret.
+	Long: `Configure your Razorpay API Key ID, Key Secret, and output format.
 
 Credentials are stored in ~/.razorpay/config.yaml
 
-You can provide credentials via flags:
-  razorpay configure --key-id rzp_test_xxxxxxxxxxxx --key-secret xxxxxxxxxxxxxxxxxxxx
+You can provide values via flags:
+  razorpay configure --key-id rzp_test_xxxxxxxxxxxx --key-secret xxxxxxxxxxxxxxxxxxxx --output-format yaml
 
 Any flag you omit will be prompted for interactively.
 
-You can also set credentials via environment variables:
+You can also set values via environment variables:
   RAZORPAY_KEY_ID
-  RAZORPAY_KEY_SECRET`,
+  RAZORPAY_KEY_SECRET
+  RAZORPAY_OUTPUT_FORMAT`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config.Init()
 		reader := bufio.NewReader(os.Stdin)
@@ -57,6 +62,30 @@ You can also set credentials via environment variables:
 		if keyID == "" || keySecret == "" {
 			return fmt.Errorf("key ID and key secret cannot be empty")
 		}
+
+		// Output format is optional from the user's perspective; we always
+		// resolve to a known value (defaulting to JSON) before saving.
+		outputFormat := strings.ToLower(strings.TrimSpace(configureOutputFormat))
+		if outputFormat == "" {
+			existing := config.OutputFormat()
+			if existing == "" {
+				existing = output.DefaultFormat
+			}
+			label := fmt.Sprintf("Output Format (%s)", strings.Join(output.Names(), ", "))
+			input, err := promptOptional(reader, label, existing)
+			if err != nil {
+				return err
+			}
+			outputFormat = strings.ToLower(strings.TrimSpace(input))
+		}
+		if outputFormat == "" {
+			outputFormat = output.DefaultFormat
+		}
+		if !output.IsRegistered(outputFormat) {
+			return fmt.Errorf("unknown output format %q (supported: %s)",
+				outputFormat, strings.Join(output.Names(), ", "))
+		}
+		config.SetOutputFormat(outputFormat)
 
 		if err := config.Save(keyID, keySecret); err != nil {
 			return fmt.Errorf("failed to save config: %w", err)
@@ -96,6 +125,23 @@ func promptValue(reader *bufio.Reader, label, existing string, secret bool) (str
 	return input, nil
 }
 
+// promptOptional is like promptValue (non-secret) but treats EOF the same
+// as an empty line — i.e. keeps the existing value. Used for fields with a
+// sensible default so non-interactive invocations (where stdin is closed
+// after the required prompts) don't error out.
+func promptOptional(reader *bufio.Reader, label, existing string) (string, error) {
+	fmt.Printf("%s [%s]: ", label, maskedHint(existing, false))
+	line, err := reader.ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	input := strings.TrimSpace(line)
+	if input == "" {
+		return existing, nil
+	}
+	return input, nil
+}
+
 // maskedHint returns the hint shown inside `[...]` next to a prompt:
 //   - "None" when there is no existing value
 //   - last 4 characters preceded by `****` for secrets
@@ -116,4 +162,6 @@ func maskedHint(value string, secret bool) string {
 func init() {
 	configureCmd.Flags().StringVar(&configureKeyID, "key-id", "", "Razorpay API Key ID")
 	configureCmd.Flags().StringVar(&configureKeySecret, "key-secret", "", "Razorpay API Key Secret")
+	configureCmd.Flags().StringVar(&configureOutputFormat, "output-format", "",
+		fmt.Sprintf("Output format (%s); default: %s", strings.Join(output.Names(), ", "), output.DefaultFormat))
 }

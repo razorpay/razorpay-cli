@@ -12,6 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/razorpay/razorpay-cli/config"
+	"github.com/razorpay/razorpay-cli/output"
 )
 
 const defaultBaseURL = "https://api.razorpay.com"
@@ -176,16 +179,11 @@ func (c *Client) PostMultipart(path string, filePath string, fields map[string]s
 	return data, nil
 }
 
-// PrettyPrint formats and prints JSON to stdout.
+// PrettyPrint renders the raw JSON returned by the API using the format
+// the user has configured (json / yaml / toml / …). The wire format stays
+// JSON; this is purely a presentation translation.
 func PrettyPrint(data []byte) {
-	var out interface{}
-	if err := json.Unmarshal(data, &out); err != nil {
-		fmt.Fprintln(os.Stdout, string(data))
-		return
-	}
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	_ = enc.Encode(out)
+	output.Print(config.OutputFormat(), data)
 }
 
 // ParseParams parses key=value pairs from a slice of strings into a map.
