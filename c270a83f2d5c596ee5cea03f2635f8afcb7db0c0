@@ -1,0 +1,6 @@
+README.md
+  defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:28:28.991Z 218,221-228
+tests/README.md
+  defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:28:42.517Z 25,28-32
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:28:28.991Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "arpit.bhayani@razorpay.com", "accepted_lines": 9, "overriden_lines": 0}, "defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:28:42.517Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "arpit.bhayani@razorpay.com", "accepted_lines": 6, "overriden_lines": 0}}}
