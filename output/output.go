@@ -105,7 +105,6 @@ func normalise(s string) string { return strings.ToLower(strings.TrimSpace(s)) }
 func init() {
 	Register("json", FormatterFunc(formatJSON))
 	Register("yaml", FormatterFunc(formatYAML))
-	Register("yml", FormatterFunc(formatYAML))
 	Register("toml", FormatterFunc(formatTOML))
 }
 

@@ -177,7 +177,7 @@ func TestNames_includes_builtins_sorted(t *testing.T) {
 	// Build a sorted copy of what we expect to be present. Other tests may
 	// have registered extras; we only care that the built-ins are there
 	// and that the slice is sorted.
-	wantPresent := []string{"json", "toml", "yaml", "yml"}
+	wantPresent := []string{"json", "toml", "yaml"}
 	for _, n := range wantPresent {
 		found := false
 		for _, g := range got {
