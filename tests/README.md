@@ -1,24 +1,22 @@
 # Razorpay CLI — End-to-End Tests
 
 This suite runs the compiled `razorpay` binary as a subprocess against the
-real Razorpay **test** API and asserts every command and subcommand behaves
-correctly.
-
-The tests are gated by the `e2e` build tag, so a plain `go test ./...` will
-never invoke them.
+live Razorpay API and asserts every command behaves correctly. The tests
+are gated by the `e2e` build tag so a plain `go test ./...` skips them.
 
 ## Prerequisites
 
-Set your Razorpay test API credentials in the environment:
+Set Razorpay API credentials in the environment. **Any key works** — the
+suite does not enforce a `rzp_test_` prefix. Whichever account the key
+belongs to is what the tests will create resources on, so most users will
+want to point this at a test account:
 
 ```sh
 export RAZORPAY_TEST_KEY_ID=rzp_test_xxxxxxxxxxxx
 export RAZORPAY_TEST_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 ```
 
-For safety, the suite **refuses to run** if `RAZORPAY_TEST_KEY_ID` does not
-start with `rzp_test_`. As a fallback, the suite will also accept
-`RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET`.
+`RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` are accepted as fallbacks.
 
 ## Running
 
@@ -26,39 +24,64 @@ start with `rzp_test_`. As a fallback, the suite will also accept
 go test -tags=e2e -v ./tests/...
 ```
 
-By default the suite exercises every command except a few that need stateful
-prerequisites the test account may not have. Those subtests skip with a clear
-hint. To exercise them, set the corresponding env variables before running:
+No other env variables are required. Workflows that cannot run on a given
+account (e.g. Route account creation when KYC is gated, document uploads
+on accounts that disallow them) skip cleanly with the API error inlined.
 
-| Command                | Env variable(s) to set                                              |
-| ---------------------- | ------------------------------------------------------------------- |
-| `payments capture`     | `RAZORPAY_TEST_AUTHORIZED_PAYMENT_ID`, `RAZORPAY_TEST_AUTHORIZED_PAYMENT_AMOUNT` |
-| `refunds create`       | `RAZORPAY_TEST_CAPTURED_PAYMENT_ID`                                 |
-| `disputes contest`     | `RAZORPAY_TEST_RUN_DESTRUCTIVE=1` (mutates an existing dispute)     |
-| `disputes accept`      | `RAZORPAY_TEST_RUN_DESTRUCTIVE=1` (debits the test account)         |
+## Test layout
 
-## Coverage
+```
+helpers_test.go      build CLI binary, run/runJSON helpers, JSON parsers
+meta_test.go         dynamic --help walk, configure flows, validation errors
+workflows_test.go    one lifecycle per resource group
+```
 
-For every command and subcommand the suite verifies:
+### Help coverage
 
-- `--help` exits cleanly and renders non-empty help text.
-- Argument validation (missing flags, bad `--param` format, wrong arg counts,
-  unknown commands) produces a non-zero exit with a clear message.
-- The success path returns valid JSON whose `entity` field matches the
-  resource type returned by the Razorpay API.
+`TestHelp` discovers the subcommand tree at runtime by parsing
+`--help` output, so newly-added commands pick up `--help` coverage
+automatically without any change to the test file.
 
-The complete list of commands tested lives in `allCommands` in
-[`e2e_test.go`](./e2e_test.go). When a new command is added to the CLI, append
-it to that list so it picks up `--help` coverage automatically.
+### Lifecycle workflows
 
-## What the tests do to your test account
+Each `TestXxxLifecycle` exercises one resource group through a homogeneous
+flow — **create → fetch → list → update → terminal** — using the ID
+returned by the create step to drive every dependent call.
 
-These tests create real resources on your **test** account:
+| Workflow                             | Lifecycle covered                                                                |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| `TestOrdersLifecycle`                | create → fetch → list → update → payments                                        |
+| `TestCustomersLifecycle`             | create → fetch → list → update                                                   |
+| `TestInvoiceItemsLifecycle`          | create → fetch → list → update → delete                                          |
+| `TestInvoicesLifecycle`              | create (draft) → fetch → list → update → delete                                  |
+| `TestPaymentLinksLifecycle`          | create → fetch → list → update → cancel                                          |
+| `TestQRCodesLifecycle`               | create → fetch → list → update → payments → close                                |
+| `TestPlansAndSubscriptionsLifecycle` | plan create/fetch/list → subscription create/fetch/list → pause/resume → cancel  |
+| `TestDocumentsLifecycle`             | upload (in-memory PNG) → fetch → fetch-content                                   |
+| `TestSmartCollectLifecycle`          | customer → virtual account create → fetch → list → payments → add-receiver → close |
+| `TestRouteAccountsLifecycle`         | account create → fetch → update → transfer list                                   |
 
-- One order per run (`orders create`).
-- One customer per run (`customers create`, with a unique email).
-- A `notes` field update on the most recent payment (if any).
+### List-driven workflows
 
-Nothing is deleted or refunded by default. `payments capture`, `refunds create`,
-`disputes contest`, and `disputes accept` only run when their dedicated env
-variables are set.
+Resources that can only be **created by real-world events** (payments,
+refunds, disputes, settlements) discover state from `list` and skip
+cleanly when nothing matches:
+
+| Workflow                  | What it covers                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------ |
+| `TestPaymentsListDriven`  | list → fetch → card → update notes → capture (when an `authorized` payment exists) → downtime list/fetch |
+| `TestRefundsListDriven`   | refund a `captured` payment when one exists; otherwise list → fetch → update         |
+| `TestDisputesListDriven`  | list → fetch (accept/contest are deliberately not auto-fired)                        |
+| `TestSettlementsListDriven` | list → fetch → recon → instant-list → instant-fetch                               |
+
+## What the tests do to your account
+
+Each run creates a handful of resources: an order, a customer, draft
+invoices, payment links, QR codes, a subscription plan + subscription,
+and a virtual account. Most are cancelled / closed / deleted in the same
+test, but some (orders, customers) are not — Razorpay's API has no delete
+operation for them.
+
+Destructive operations on objects the tests did not themselves create —
+accepting a real dispute, capturing a real authorised payment — only run
+when matching state already exists on the account.

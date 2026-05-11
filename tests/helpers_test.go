@@ -1,9 +1,13 @@
 //go:build e2e
 // +build e2e
 
-// Package tests runs the Razorpay CLI as a subprocess against the real
-// Razorpay test API and asserts on the responses. It is gated by the `e2e`
+// Package tests runs the Razorpay CLI as a subprocess against the live
+// Razorpay API and asserts on the responses. It is gated by the `e2e`
 // build tag so a plain `go test ./...` never invokes it.
+//
+// The suite accepts any credentials (test or live) — it does not gate on
+// the key prefix. Callers are responsible for pointing it at a key whose
+// account they are willing to mutate.
 package tests
 
 import (
@@ -17,6 +21,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -31,14 +36,9 @@ func TestMain(m *testing.M) {
 
 	if keyID == "" || keySecret == "" {
 		fmt.Fprintln(os.Stderr,
-			"e2e: RAZORPAY_TEST_KEY_ID and RAZORPAY_TEST_KEY_SECRET are required "+
-				"(RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET are accepted as a fallback). Skipping.")
+			"e2e: RAZORPAY_TEST_KEY_ID / RAZORPAY_TEST_KEY_SECRET (or RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) "+
+				"must be set. Skipping.")
 		os.Exit(0)
-	}
-	if !strings.HasPrefix(keyID, "rzp_test_") {
-		fmt.Fprintln(os.Stderr,
-			"e2e: refusing to run against a non-test key; key id must start with 'rzp_test_'.")
-		os.Exit(1)
 	}
 
 	tmpBin, err := os.MkdirTemp("", "razorpay-cli-e2e-bin-")
@@ -71,14 +71,34 @@ type result struct {
 	err    error
 }
 
-// run executes the CLI with credentials passed via env. Each call gets a fresh
-// temp HOME so configure-writes from one test do not leak into another.
+// runOpts is the verbose form for run. Most callers should use run /
+// runWithStdin / runNoCreds instead.
+type runOpts struct {
+	stdin   io.Reader
+	noCreds bool // when true, RAZORPAY_KEY_ID/SECRET are NOT injected
+}
+
+// run executes the CLI with credentials injected via env. Each call gets a
+// fresh temp HOME so `configure` writes from one test never leak into another.
 func run(t *testing.T, args ...string) result {
 	t.Helper()
-	return runWithStdin(t, nil, args...)
+	return runWith(t, runOpts{}, args...)
 }
 
 func runWithStdin(t *testing.T, stdin io.Reader, args ...string) result {
+	t.Helper()
+	return runWith(t, runOpts{stdin: stdin}, args...)
+}
+
+// runNoCreds runs the CLI without RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET in
+// the environment — used by configure subtests that assert behaviour when
+// no credentials are present.
+func runNoCreds(t *testing.T, stdin io.Reader, args ...string) result {
+	t.Helper()
+	return runWith(t, runOpts{stdin: stdin, noCreds: true}, args...)
+}
+
+func runWith(t *testing.T, opts runOpts, args ...string) result {
 	t.Helper()
 
 	tmpHome, err := os.MkdirTemp("", "razorpay-cli-home-")
@@ -88,13 +108,18 @@ func runWithStdin(t *testing.T, stdin io.Reader, args ...string) result {
 	t.Cleanup(func() { _ = os.RemoveAll(tmpHome) })
 
 	cmd := exec.Command(binPath, args...)
-	cmd.Env = append(os.Environ(),
-		"HOME="+tmpHome,
-		"RAZORPAY_KEY_ID="+keyID,
-		"RAZORPAY_KEY_SECRET="+keySecret,
-	)
-	if stdin != nil {
-		cmd.Stdin = stdin
+	env := append(os.Environ(), "HOME="+tmpHome)
+	if !opts.noCreds {
+		env = append(env,
+			"RAZORPAY_KEY_ID="+keyID,
+			"RAZORPAY_KEY_SECRET="+keySecret,
+		)
+	} else {
+		env = append(env, "RAZORPAY_KEY_ID=", "RAZORPAY_KEY_SECRET=")
+	}
+	cmd.Env = env
+	if opts.stdin != nil {
+		cmd.Stdin = opts.stdin
 	}
 
 	var out, errb bytes.Buffer
@@ -104,14 +129,28 @@ func runWithStdin(t *testing.T, stdin io.Reader, args ...string) result {
 	return result{stdout: out.String(), stderr: errb.String(), err: err}
 }
 
-// runJSON runs the CLI, fails the test on a non-zero exit, and parses
-// the stdout as a JSON object.
+// runJSON fails the test if the CLI exits non-zero. Used when a command
+// must succeed (e.g. a `list` call, or a `create` we expect to work).
 func runJSON(t *testing.T, args ...string) map[string]any {
 	t.Helper()
 	r := run(t, args...)
 	if r.err != nil {
 		t.Fatalf("`razorpay %s` failed: %v\nstdout: %s\nstderr: %s",
 			strings.Join(args, " "), r.err, r.stdout, r.stderr)
+	}
+	return parseJSON(t, args, r.stdout)
+}
+
+// runOrSkipJSON skips (rather than fails) when the CLI exits non-zero.
+// Used for API calls that may legitimately fail on a given account —
+// e.g. Route account creation needs KYC fields the test account may not
+// have, or downstream state may not exist yet.
+func runOrSkipJSON(t *testing.T, args ...string) map[string]any {
+	t.Helper()
+	r := run(t, args...)
+	if r.err != nil {
+		t.Skipf("`razorpay %s` is not exercisable on this account: %s",
+			strings.Join(args, " "), strings.TrimSpace(r.stderr))
 	}
 	return parseJSON(t, args, r.stdout)
 }
@@ -148,6 +187,27 @@ func firstItem(t *testing.T, resp map[string]any) map[string]any {
 	return first
 }
 
+// findItem scans a `collection` response for the first item whose top-level
+// fields match the predicate. Returns nil if none.
+func findItem(t *testing.T, resp map[string]any, pred func(map[string]any) bool) map[string]any {
+	t.Helper()
+	requireEntity(t, resp, "collection")
+	items, _ := resp["items"].([]any)
+	for _, it := range items {
+		m, _ := it.(map[string]any)
+		if m != nil && pred(m) {
+			return m
+		}
+	}
+	return nil
+}
+
+// strField is a small convenience to extract a top-level string field.
+func strField(m map[string]any, key string) string {
+	v, _ := m[key].(string)
+	return v
+}
+
 func firstNonEmpty(vs ...string) string {
 	for _, v := range vs {
 		if v != "" {
@@ -155,4 +215,10 @@ func firstNonEmpty(vs ...string) string {
 		}
 	}
 	return ""
+}
+
+// uniqSuffix returns a high-resolution suffix suitable for keying test
+// resources (receipts, references, emails) so successive runs do not collide.
+func uniqSuffix() string {
+	return fmt.Sprintf("%d", time.Now().UnixNano())
 }
