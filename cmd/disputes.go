@@ -11,11 +11,13 @@ import (
 var disputesCmd = &cobra.Command{
 	Use:   "disputes",
 	Short: "Manage disputes",
+	Long:  "List, fetch, accept, and contest Razorpay disputes.",
 }
 
 var disputesListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all disputes",
+	Use:     "list",
+	Short:   "List disputes",
+	Example: "  razorpay disputes list --count 25",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		q := url.Values{}
@@ -41,9 +43,10 @@ var disputesListCmd = &cobra.Command{
 }
 
 var disputesFetchCmd = &cobra.Command{
-	Use:   "fetch <dispute_id>",
-	Short: "Fetch a dispute by ID",
-	Args:  cobra.ExactArgs(1),
+	Use:     "fetch <dispute_id>",
+	Short:   "Fetch a dispute by ID",
+	Example: "  razorpay disputes fetch disp_FmnsM5fHkRGQAk",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		data, err := client.Get("/disputes/"+args[0], nil)
@@ -56,9 +59,11 @@ var disputesFetchCmd = &cobra.Command{
 }
 
 var disputesAcceptCmd = &cobra.Command{
-	Use:   "accept <dispute_id>",
-	Short: "Accept a dispute",
-	Args:  cobra.ExactArgs(1),
+	Use:     "accept <dispute_id>",
+	Short:   "Accept a dispute",
+	Long:    "Accept the dispute. The disputed amount is debited from your account and refunded to the customer.",
+	Example: "  razorpay disputes accept disp_FmnsM5fHkRGQAk",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		data, err := client.Post("/disputes/"+args[0]+"/accept", nil)
@@ -71,9 +76,11 @@ var disputesAcceptCmd = &cobra.Command{
 }
 
 var disputesContestCmd = &cobra.Command{
-	Use:   "contest <dispute_id>",
-	Short: "Contest a dispute",
-	Args:  cobra.ExactArgs(1),
+	Use:     "contest <dispute_id>",
+	Short:   "Contest a dispute",
+	Long:    "Contest a dispute by attaching evidence. Use --action draft to save evidence without submitting, or --action submit to submit it to Razorpay.",
+	Example: "  razorpay disputes contest disp_FmnsM5fHkRGQAk --action submit --param evidence[summary]=\"Item delivered\"",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		params, _ := cmd.Flags().GetStringArray("param")
@@ -86,12 +93,7 @@ var disputesContestCmd = &cobra.Command{
 			body["action"] = action
 		}
 
-		var path string
-		if action == "submit" {
-			path = fmt.Sprintf("/disputes/%s/contest", args[0])
-		} else {
-			path = fmt.Sprintf("/disputes/%s/contest", args[0])
-		}
+		path := fmt.Sprintf("/disputes/%s/contest", args[0])
 		data, err := client.Patch(path, body)
 		if err != nil {
 			handleErr(err)
@@ -107,11 +109,11 @@ func init() {
 	disputesCmd.AddCommand(disputesAcceptCmd)
 	disputesCmd.AddCommand(disputesContestCmd)
 
-	disputesListCmd.Flags().Int("count", 10, "Number of disputes to fetch")
-	disputesListCmd.Flags().Int("skip", 0, "Number of disputes to skip")
-	disputesListCmd.Flags().Int64("from", 0, "Unix timestamp: fetch disputes created after this time")
-	disputesListCmd.Flags().Int64("to", 0, "Unix timestamp: fetch disputes created before this time")
+	disputesListCmd.Flags().Int("count", 10, "Maximum number of disputes to return (max 100)")
+	disputesListCmd.Flags().Int("skip", 0, "Number of disputes to skip for pagination")
+	disputesListCmd.Flags().Int64("from", 0, "Include disputes created on or after this Unix timestamp")
+	disputesListCmd.Flags().Int64("to", 0, "Include disputes created on or before this Unix timestamp")
 
-	disputesContestCmd.Flags().StringArray("param", nil, "Parameter as key=value (e.g. --param amount=1000)")
-	disputesContestCmd.Flags().String("action", "", "Action: draft or submit")
+	disputesContestCmd.Flags().StringArray("param", nil, "Evidence field as key=value; repeatable (e.g. --param evidence[summary]=\"Item delivered\")")
+	disputesContestCmd.Flags().String("action", "", "Contest action: draft (save) or submit (finalize)")
 }

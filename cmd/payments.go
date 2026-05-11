@@ -11,11 +11,14 @@ import (
 var paymentsCmd = &cobra.Command{
 	Use:   "payments",
 	Short: "Manage payments",
+	Long:  "List, fetch, capture, and update Razorpay payments.",
 }
 
 var paymentsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all payments",
+	Use:     "list",
+	Short:   "List payments",
+	Long:    "List payments on the account, with optional pagination and a created-at time window.",
+	Example: "  razorpay payments list --count 25 --from 1704067200",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		q := url.Values{}
@@ -41,9 +44,10 @@ var paymentsListCmd = &cobra.Command{
 }
 
 var paymentsFetchCmd = &cobra.Command{
-	Use:   "fetch <payment_id>",
-	Short: "Fetch a payment by ID",
-	Args:  cobra.ExactArgs(1),
+	Use:     "fetch <payment_id>",
+	Short:   "Fetch a payment by ID",
+	Example: "  razorpay payments fetch pay_29QQoUBi66xm2f",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		data, err := client.Get("/payments/"+args[0], nil)
@@ -56,15 +60,16 @@ var paymentsFetchCmd = &cobra.Command{
 }
 
 var paymentsCaptureCmd = &cobra.Command{
-	Use:   "capture <payment_id>",
-	Short: "Capture an authorized payment",
-	Args:  cobra.ExactArgs(1),
+	Use:     "capture <payment_id>",
+	Short:   "Capture an authorized payment",
+	Example: "  razorpay payments capture pay_29QQoUBi66xm2f --amount 50000 --currency INR",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		amount, _ := cmd.Flags().GetInt("amount")
 		currency, _ := cmd.Flags().GetString("currency")
 		if amount <= 0 {
-			return fmt.Errorf("--amount is required and must be > 0")
+			return fmt.Errorf("amount must be greater than 0")
 		}
 		body := map[string]interface{}{
 			"amount":   amount,
@@ -80,9 +85,10 @@ var paymentsCaptureCmd = &cobra.Command{
 }
 
 var paymentsUpdateCmd = &cobra.Command{
-	Use:   "update <payment_id>",
-	Short: "Update a payment",
-	Args:  cobra.ExactArgs(1),
+	Use:     "update <payment_id>",
+	Short:   "Update a payment's notes",
+	Example: "  razorpay payments update pay_29QQoUBi66xm2f --param notes[reason]=duplicate",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		params, _ := cmd.Flags().GetStringArray("param")
@@ -101,7 +107,7 @@ var paymentsUpdateCmd = &cobra.Command{
 
 var paymentsFetchTransfersCmd = &cobra.Command{
 	Use:   "transfers <payment_id>",
-	Short: "Fetch transfers for a payment",
+	Short: "List transfers for a payment",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
@@ -121,14 +127,14 @@ func init() {
 	paymentsCmd.AddCommand(paymentsUpdateCmd)
 	paymentsCmd.AddCommand(paymentsFetchTransfersCmd)
 
-	paymentsListCmd.Flags().Int("count", 10, "Number of payments to fetch (max 100)")
-	paymentsListCmd.Flags().Int("skip", 0, "Number of payments to skip")
-	paymentsListCmd.Flags().Int64("from", 0, "Unix timestamp: fetch payments created after this time")
-	paymentsListCmd.Flags().Int64("to", 0, "Unix timestamp: fetch payments created before this time")
+	paymentsListCmd.Flags().Int("count", 10, "Maximum number of payments to return (max 100)")
+	paymentsListCmd.Flags().Int("skip", 0, "Number of payments to skip for pagination")
+	paymentsListCmd.Flags().Int64("from", 0, "Include payments created on or after this Unix timestamp")
+	paymentsListCmd.Flags().Int64("to", 0, "Include payments created on or before this Unix timestamp")
 
-	paymentsCaptureCmd.Flags().Int("amount", 0, "Amount to capture in smallest currency unit (e.g. paise)")
-	paymentsCaptureCmd.Flags().String("currency", "INR", "Currency code (e.g. INR)")
+	paymentsCaptureCmd.Flags().Int("amount", 0, "Amount to capture, in the smallest currency unit (e.g. paise for INR)")
+	paymentsCaptureCmd.Flags().String("currency", "INR", "ISO 4217 currency code (e.g. INR)")
 	_ = paymentsCaptureCmd.MarkFlagRequired("amount")
 
-	paymentsUpdateCmd.Flags().StringArray("param", nil, "Parameter as key=value (e.g. --param notes[key]=value)")
+	paymentsUpdateCmd.Flags().StringArray("param", nil, "Field to update as key=value; repeatable (e.g. --param notes[reason]=duplicate)")
 }

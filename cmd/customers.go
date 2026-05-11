@@ -11,11 +11,13 @@ import (
 var customersCmd = &cobra.Command{
 	Use:   "customers",
 	Short: "Manage customers",
+	Long:  "Create, list, fetch, and update Razorpay customers.",
 }
 
 var customersListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all customers",
+	Use:     "list",
+	Short:   "List customers",
+	Example: "  razorpay customers list --count 25",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		q := url.Values{}
@@ -35,9 +37,10 @@ var customersListCmd = &cobra.Command{
 }
 
 var customersFetchCmd = &cobra.Command{
-	Use:   "fetch <customer_id>",
-	Short: "Fetch a customer by ID",
-	Args:  cobra.ExactArgs(1),
+	Use:     "fetch <customer_id>",
+	Short:   "Fetch a customer by ID",
+	Example: "  razorpay customers fetch cust_1Aa00000000004",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		data, err := client.Get("/customers/"+args[0], nil)
@@ -50,8 +53,9 @@ var customersFetchCmd = &cobra.Command{
 }
 
 var customersCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new customer",
+	Use:     "create",
+	Short:   "Create a customer",
+	Example: "  razorpay customers create --name \"Ada Lovelace\" --email ada@example.com --contact 9876543210",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		name, _ := cmd.Flags().GetString("name")
@@ -91,9 +95,10 @@ var customersCreateCmd = &cobra.Command{
 }
 
 var customersUpdateCmd = &cobra.Command{
-	Use:   "update <customer_id>",
-	Short: "Update a customer",
-	Args:  cobra.ExactArgs(1),
+	Use:     "update <customer_id>",
+	Short:   "Update a customer",
+	Example: "  razorpay customers update cust_1Aa00000000004 --email new@example.com",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		name, _ := cmd.Flags().GetString("name")
@@ -134,16 +139,16 @@ func init() {
 	customersCmd.AddCommand(customersCreateCmd)
 	customersCmd.AddCommand(customersUpdateCmd)
 
-	customersListCmd.Flags().Int("count", 10, "Number of customers to fetch")
-	customersListCmd.Flags().Int("skip", 0, "Number of customers to skip")
+	customersListCmd.Flags().Int("count", 10, "Maximum number of customers to return (max 100)")
+	customersListCmd.Flags().Int("skip", 0, "Number of customers to skip for pagination")
 
-	customersCreateCmd.Flags().String("name", "", "Customer name")
-	customersCreateCmd.Flags().String("email", "", "Customer email address")
-	customersCreateCmd.Flags().String("contact", "", "Customer contact number")
-	customersCreateCmd.Flags().StringArray("param", nil, "Additional parameter as key=value")
+	customersCreateCmd.Flags().String("name", "", "Customer's full name")
+	customersCreateCmd.Flags().String("email", "", "Customer's email address")
+	customersCreateCmd.Flags().String("contact", "", "Customer's contact number")
+	customersCreateCmd.Flags().StringArray("param", nil, "Additional field as key=value; repeatable")
 
-	customersUpdateCmd.Flags().String("name", "", "Customer name")
-	customersUpdateCmd.Flags().String("email", "", "Customer email address")
-	customersUpdateCmd.Flags().String("contact", "", "Customer contact number")
-	customersUpdateCmd.Flags().StringArray("param", nil, "Additional parameter as key=value")
+	customersUpdateCmd.Flags().String("name", "", "Customer's full name")
+	customersUpdateCmd.Flags().String("email", "", "Customer's email address")
+	customersUpdateCmd.Flags().String("contact", "", "Customer's contact number")
+	customersUpdateCmd.Flags().StringArray("param", nil, "Additional field as key=value; repeatable")
 }

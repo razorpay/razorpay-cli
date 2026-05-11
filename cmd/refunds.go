@@ -11,11 +11,13 @@ import (
 var refundsCmd = &cobra.Command{
 	Use:   "refunds",
 	Short: "Manage refunds",
+	Long:  "Create, list, fetch, and update Razorpay refunds.",
 }
 
 var refundsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all refunds",
+	Use:     "list",
+	Short:   "List refunds",
+	Example: "  razorpay refunds list --count 25",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		q := url.Values{}
@@ -41,9 +43,10 @@ var refundsListCmd = &cobra.Command{
 }
 
 var refundsFetchCmd = &cobra.Command{
-	Use:   "fetch <refund_id>",
-	Short: "Fetch a refund by ID",
-	Args:  cobra.ExactArgs(1),
+	Use:     "fetch <refund_id>",
+	Short:   "Fetch a refund by ID",
+	Example: "  razorpay refunds fetch rfnd_FP8QHiV938haTz",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		data, err := client.Get("/refunds/"+args[0], nil)
@@ -56,9 +59,11 @@ var refundsFetchCmd = &cobra.Command{
 }
 
 var refundsCreateCmd = &cobra.Command{
-	Use:   "create <payment_id>",
-	Short: "Create a refund for a payment",
-	Args:  cobra.ExactArgs(1),
+	Use:     "create <payment_id>",
+	Short:   "Create a refund for a payment",
+	Long:    "Create a full or partial refund for a captured payment. Omit --amount for a full refund.",
+	Example: "  razorpay refunds create pay_29QQoUBi66xm2f --amount 10000 --speed normal",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		amount, _ := cmd.Flags().GetInt("amount")
@@ -90,9 +95,10 @@ var refundsCreateCmd = &cobra.Command{
 }
 
 var refundsUpdateCmd = &cobra.Command{
-	Use:   "update <refund_id>",
-	Short: "Update a refund",
-	Args:  cobra.ExactArgs(1),
+	Use:     "update <refund_id>",
+	Short:   "Update a refund's notes",
+	Example: "  razorpay refunds update rfnd_FP8QHiV938haTz --param notes[reason]=duplicate",
+	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := newClient()
 		params, _ := cmd.Flags().GetStringArray("param")
@@ -115,14 +121,14 @@ func init() {
 	refundsCmd.AddCommand(refundsCreateCmd)
 	refundsCmd.AddCommand(refundsUpdateCmd)
 
-	refundsListCmd.Flags().Int("count", 10, "Number of refunds to fetch")
-	refundsListCmd.Flags().Int("skip", 0, "Number of refunds to skip")
-	refundsListCmd.Flags().Int64("from", 0, "Unix timestamp: fetch refunds created after this time")
-	refundsListCmd.Flags().Int64("to", 0, "Unix timestamp: fetch refunds created before this time")
+	refundsListCmd.Flags().Int("count", 10, "Maximum number of refunds to return (max 100)")
+	refundsListCmd.Flags().Int("skip", 0, "Number of refunds to skip for pagination")
+	refundsListCmd.Flags().Int64("from", 0, "Include refunds created on or after this Unix timestamp")
+	refundsListCmd.Flags().Int64("to", 0, "Include refunds created on or before this Unix timestamp")
 
-	refundsCreateCmd.Flags().Int("amount", 0, "Amount to refund in smallest currency unit (omit for full refund)")
+	refundsCreateCmd.Flags().Int("amount", 0, "Amount to refund in the smallest currency unit (omit for a full refund)")
 	refundsCreateCmd.Flags().String("speed", "", "Refund speed: normal or optimum")
-	refundsCreateCmd.Flags().StringArray("param", nil, "Additional parameter as key=value")
+	refundsCreateCmd.Flags().StringArray("param", nil, "Additional field as key=value; repeatable")
 
-	refundsUpdateCmd.Flags().StringArray("param", nil, "Parameter as key=value")
+	refundsUpdateCmd.Flags().StringArray("param", nil, "Field to update as key=value; repeatable")
 }
