@@ -3,7 +3,7 @@ set -euo pipefail
 
 BINARY="razorpay"
 INSTALL_DIR="/usr/local/bin"
-S3_BASE_URL="https://razorpay.com/cli/latest/install.sh"
+BASE_URL="https://razorpay.com/cli/latest"
 
 # ---------------------------------------------------------------------------
 # Detect OS and architecture
@@ -30,26 +30,13 @@ case "$ARCH" in
 esac
 
 # ---------------------------------------------------------------------------
-# Resolve latest version from S3
-# ---------------------------------------------------------------------------
-echo "Fetching latest version..."
-VERSION=$(curl -fsSL "${S3_BASE_URL}/latest")
-
-if [ -z "$VERSION" ]; then
-  echo "Could not determine latest version. Check your internet connection."
-  exit 1
-fi
-
-echo "Latest version: $VERSION"
-
-# ---------------------------------------------------------------------------
 # Download and extract
 # ---------------------------------------------------------------------------
-ARCHIVE="${BINARY}_${VERSION#v}_${OS_NAME}_${ARCH_NAME}.tar.gz"
-URL="${S3_BASE_URL}/${VERSION#v}/${ARCHIVE}"
+ARCHIVE="${BINARY}_${OS_NAME}_${ARCH_NAME}.tar.gz"
+URL="${BASE_URL}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 
-echo "Downloading $ARCHIVE..."
+echo "Downloading ${ARCHIVE}..."
 curl -fsSL "$URL" -o "$TMP_DIR/$ARCHIVE"
 
 echo "Extracting..."
@@ -69,6 +56,7 @@ fi
 
 rm -rf "$TMP_DIR"
 
+VERSION=$("$INSTALL_DIR/$BINARY" --version 2>/dev/null || echo "unknown")
 echo ""
-echo "razorpay $VERSION installed to $INSTALL_DIR/$BINARY"
+echo "razorpay ${VERSION} installed to $INSTALL_DIR/$BINARY"
 echo "Run 'razorpay configure' to set up your API credentials."
