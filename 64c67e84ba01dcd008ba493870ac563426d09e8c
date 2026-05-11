@@ -1,0 +1,8 @@
+.github/workflows/release.yml
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T08:15:20.579Z 1,180-183
+CHANGELOG.md
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:48:20.194Z 5
+scripts/release.sh
+  590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:48:15.592Z 74,76
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T08:15:20.579Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 5, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:48:20.194Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}, "590cf57d-c77b-4ab6-859d-f7fba8d77d49:2026-04-28T07:48:15.592Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "manik.singh@razorpay.com", "accepted_lines": 2, "overriden_lines": 0}}}
