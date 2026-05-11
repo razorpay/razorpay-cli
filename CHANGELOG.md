@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.0.5 — 2026-05-11
+
+- Enhance make release flow with auto-generated notes and version bump
+- Drop yml alias and keep only yaml as the format name
+- Surface make targets in README docs instead of raw go commands
+- Unify configure prompts so output format reads from stdin uniformly
+- Add configurable output format with JSON, YAML, and TOML
+- Fix e2e workflow tests against capability-limited accounts
+- Wire make test and ground README in real examples
+- Restructure e2e tests as chained lifecycle workflows
+- Refresh README for post-merge command surface
+- Polish CLI UX and add end-to-end test suite
+
 ## v1.0.4 — 2026-04-30
 
 Added:

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
+	"github.com/razorpay/razorpay-cli/output"
 	"github.com/spf13/viper"
 )
 
@@ -35,6 +37,9 @@ func Init() {
 	viper.SetEnvPrefix("RAZORPAY")
 	_ = viper.BindEnv("key_id", "RAZORPAY_KEY_ID")
 	_ = viper.BindEnv("key_secret", "RAZORPAY_KEY_SECRET")
+	_ = viper.BindEnv("output_format", "RAZORPAY_OUTPUT_FORMAT")
+
+	viper.SetDefault("output_format", output.DefaultFormat)
 
 	_ = viper.ReadInConfig()
 }
@@ -45,6 +50,20 @@ func KeyID() string {
 
 func KeySecret() string {
 	return viper.GetString("key_secret")
+}
+
+// OutputFormat returns the configured presentation format (json, yaml, …).
+// The value is normalised to lower case. Unknown values are not rewritten
+// here — the output package handles that fallback so the user gets a
+// warning the first time they print.
+func OutputFormat() string {
+	return strings.ToLower(strings.TrimSpace(viper.GetString("output_format")))
+}
+
+// SetOutputFormat updates the in-memory output_format value. The next Save
+// call persists it.
+func SetOutputFormat(format string) {
+	viper.Set("output_format", strings.ToLower(strings.TrimSpace(format)))
 }
 
 func Save(keyID, keySecret string) error {

@@ -12,6 +12,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/razorpay/razorpay-cli/config"
+	"github.com/razorpay/razorpay-cli/output"
 )
 
 const defaultBaseURL = "https://api.razorpay.com"
@@ -38,7 +41,7 @@ func New(keyID, keySecret string) *Client {
 
 func (c *Client) requireAuth() error {
 	if c.keyID == "" || c.keySecret == "" {
-		return fmt.Errorf("API credentials not configured. Run 'razorpay configure' or set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET")
+		return fmt.Errorf("API credentials not configured; run 'razorpay configure' or set the RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables")
 	}
 	return nil
 }
@@ -90,7 +93,7 @@ func (c *Client) doWithHeaders(method, path string, body interface{}, query url.
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error %d: %s", resp.StatusCode, string(data))
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(data))
 	}
 	return data, nil
 }
@@ -176,16 +179,11 @@ func (c *Client) PostMultipart(path string, filePath string, fields map[string]s
 	return data, nil
 }
 
-// PrettyPrint formats and prints JSON to stdout.
+// PrettyPrint renders the raw JSON returned by the API using the format
+// the user has configured (json / yaml / toml / …). The wire format stays
+// JSON; this is purely a presentation translation.
 func PrettyPrint(data []byte) {
-	var out interface{}
-	if err := json.Unmarshal(data, &out); err != nil {
-		fmt.Fprintln(os.Stdout, string(data))
-		return
-	}
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	_ = enc.Encode(out)
+	output.Print(config.OutputFormat(), data)
 }
 
 // ParseParams parses key=value pairs from a slice of strings into a map.
@@ -193,8 +191,8 @@ func ParseParams(pairs []string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 	for _, p := range pairs {
 		parts := strings.SplitN(p, "=", 2)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid parameter %q: expected key=value", p)
+		if len(parts) != 2 || parts[0] == "" {
+			return nil, fmt.Errorf("invalid parameter %q: expected format key=value", p)
 		}
 		result[parts[0]] = parts[1]
 	}

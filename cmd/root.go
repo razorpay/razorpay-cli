@@ -23,15 +23,21 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "razorpay",
-	Short: "Razorpay CLI - interact with the Razorpay API from your terminal",
-	Long: `A command-line interface for the Razorpay API.
+	Short: "Command-line interface for the Razorpay API",
+	Long: `The Razorpay CLI provides command-line access to the Razorpay API.
 
-Configure your API keys with:
+To get started, configure your API credentials:
+
   razorpay configure
 
-Then use resource commands like:
+Then run any resource command, for example:
+
   razorpay payments list
-  razorpay orders create --amount 5000 --currency INR`,
+  razorpay orders create --amount 50000 --currency INR
+
+For help on a specific command, run:
+
+  razorpay <command> --help`,
 }
 
 // SetVersion stamps the root command with build-time version info injected

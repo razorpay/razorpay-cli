@@ -19,16 +19,14 @@ setup:
 	go mod download
 .PHONY: setup
 
-# Run all tests
+# Run the end-to-end test suite. The suite is gated by the `e2e` build tag
+# and runs the compiled CLI against the live Razorpay API. Export
+# RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET before invoking — the suite
+# exits with a non-zero status if either is missing. See tests/README.md
+# for details.
 test:
-	go test $(TEST_OPTIONS) -failfast -race -coverpkg=./... -covermode=atomic \
-		-coverprofile=coverage.txt $(SOURCE_FILES) -run $(TEST_PATTERN) -timeout=2m
+	go test -tags=e2e -v -timeout=10m ./tests/...
 .PHONY: test
-
-# Run tests and open HTML coverage report
-cover: test
-	go tool cover -html=coverage.txt
-.PHONY: cover
 
 # Build the razorpay binary for the current platform
 build:
