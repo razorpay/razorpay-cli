@@ -215,9 +215,17 @@ To add a subcommand to an existing resource, drop a new file into `cmd/<resource
 
 ## Build and test
 
+Every dev workflow has a `make` target — prefer those over invoking `go` directly so flags, build tags, and lint versions stay in one place.
+
 ```bash
-make build   # compile the razorpay binary (output in ./razorpay)
-make test    # run the end-to-end suite against the live API
+make setup                # download Go module dependencies
+make build                # compile the razorpay binary (output in ./razorpay)
+make build-all-platforms  # cross-compile for darwin / linux / windows
+make fmt                  # gofmt -s every .go file
+make lint                 # run golangci-lint (auto-installs the pinned version)
+make test                 # run the end-to-end suite against the live API
+make ci                   # build + test + lint + go mod tidy check
+make clean                # remove build artefacts
 ```
 
 The end-to-end suite lives in [`tests/`](tests/) and is gated by the `e2e` build tag. `make test` exits with a non-zero status unless `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are exported in the environment:

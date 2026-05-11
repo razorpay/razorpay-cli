@@ -22,12 +22,14 @@ prompts you to set them.
 ## Running
 
 ```sh
-go test -tags=e2e -v ./tests/...
+make test
 ```
 
-No other env variables are required. Workflows that cannot run on a given
-account (e.g. Route account creation when KYC is gated, document uploads
-on accounts that disallow them) skip cleanly with the API error inlined.
+The target wires in the `e2e` build tag, the verbose flag, and the
+10-minute timeout. No other env variables are required. Workflows that
+cannot run on a given account (e.g. Route account creation when KYC is
+gated, document uploads on accounts that disallow them) skip cleanly
+with the API error inlined.
 
 ## Test layout
 
