@@ -1,0 +1,4 @@
+output/output_test.go
+  defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:30:03.829Z 180
+---
+{"schema_version": "authorship/3.0.0", "base_commit_sha": "HEAD~1", "prompts": {"defb7b27-d606-43b1-ac5a-6d7b1b7ec17e:2026-05-11T08:30:03.829Z": {"agent_id": {"tool": "claude_code", "model": ""}, "human_author": "arpit.bhayani@razorpay.com", "accepted_lines": 1, "overriden_lines": 0}}}
