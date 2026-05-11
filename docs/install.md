@@ -156,12 +156,12 @@ curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
 
    **x86-64:**
    ```powershell
-   curl.exe -fsSL https://razorpay.com/cli/latest/razorpay_windows_x86_64.zip
+   curl.exe -fsSL -o razorpay_windows_x86_64.zip https://razorpay.com/cli/latest/razorpay_windows_x86_64.zip
    ```
 
    **x86 (32-bit):**
    ```powershell
-   curl.exe -fsSL https://razorpay.com/cli/latest/razorpay_windows_i386.zip
+   curl.exe -fsSL -o razorpay_windows_i386.zip https://razorpay.com/cli/latest/razorpay_windows_i386.zip
    ```
 
 2. Extract the archive.
