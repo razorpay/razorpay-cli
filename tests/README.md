@@ -12,11 +12,12 @@ belongs to is what the tests will create resources on, so most users will
 want to point this at a test account:
 
 ```sh
-export RAZORPAY_TEST_KEY_ID=rzp_test_xxxxxxxxxxxx
-export RAZORPAY_TEST_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
+export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 ```
 
-`RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` are accepted as fallbacks.
+If either variable is missing the suite exits with a non-zero status and
+prompts you to set them.
 
 ## Running
 

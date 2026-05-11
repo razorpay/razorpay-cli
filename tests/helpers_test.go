@@ -31,14 +31,16 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	keyID = firstNonEmpty(os.Getenv("RAZORPAY_TEST_KEY_ID"), os.Getenv("RAZORPAY_KEY_ID"))
-	keySecret = firstNonEmpty(os.Getenv("RAZORPAY_TEST_KEY_SECRET"), os.Getenv("RAZORPAY_KEY_SECRET"))
+	keyID = os.Getenv("RAZORPAY_KEY_ID")
+	keySecret = os.Getenv("RAZORPAY_KEY_SECRET")
 
 	if keyID == "" || keySecret == "" {
 		fmt.Fprintln(os.Stderr,
-			"e2e: RAZORPAY_TEST_KEY_ID / RAZORPAY_TEST_KEY_SECRET (or RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET) "+
-				"must be set. Skipping.")
-		os.Exit(0)
+			"e2e: RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set before running the tests.\n"+
+				"Export them in your shell, e.g.:\n"+
+				"  export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx\n"+
+				"  export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx")
+		os.Exit(1)
 	}
 
 	tmpBin, err := os.MkdirTemp("", "razorpay-cli-e2e-bin-")

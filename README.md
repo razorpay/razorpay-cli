@@ -4,29 +4,39 @@ Command-line interface for the [Razorpay API](https://razorpay.com/docs/api/). M
 
 ## Installation
 
-Recommended — install the latest release for your platform:
+Install the latest release for your platform:
 
 ```bash
 curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
 ```
 
-Alternatives (`go install`, manual download, build from source) are in [docs/install.md](docs/install.md).
+The script downloads the right tarball for your OS/arch, extracts the `razorpay` binary, and places it at `/usr/local/bin/razorpay`. Confirm the install:
+
+```bash
+$ razorpay --version
+razorpay version v1.0.4
+```
+
+Other options — Homebrew-style manual download, `go install`, building from source — are in [docs/install.md](docs/install.md).
 
 ## Configuration
 
-Run `configure` interactively. Existing values are shown in brackets; press Enter to keep them. The secret is masked.
+Run `configure` interactively. The current value (if any) appears in brackets and Enter keeps it. The secret is masked while you type.
 
 ```bash
-razorpay configure
+$ razorpay configure
+Razorpay Key ID [None]: rzp_test_1DP5mmOlF5G5ag
+Razorpay Key Secret [None]:
+Credentials saved to /Users/you/.razorpay/config.yaml
 ```
 
-Or pass credentials via flags — any flag you omit is prompted for:
+Or pass credentials non-interactively — any flag you omit is prompted for:
 
 ```bash
 razorpay configure --key-id rzp_test_xxxxxxxxxxxx --key-secret xxxxxxxxxxxxxxxxxxxx
 ```
 
-Credentials are stored in `~/.razorpay/config.yaml`. Environment variables override the file:
+Credentials live in `~/.razorpay/config.yaml`. Environment variables override the file:
 
 ```bash
 export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
@@ -35,20 +45,133 @@ export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 
 Generate keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/app/website-app-settings/api-keys) — `rzp_test_` for development, `rzp_live_` for production.
 
-## Quick start
+## Examples
 
-Amounts are always in the smallest currency unit (paise for INR).
+All amounts are in the smallest currency unit (paise for INR — `50000` = ₹500.00).
+
+### Create an order
 
 ```bash
-# Create an order
-razorpay orders create --amount 5000 --currency INR --receipt order-001
-
-# Fetch it back (use the id from the response above)
-razorpay orders fetch order_RB58MiP5SPFYyM
-
-# List recent payments
-razorpay payments list --count 5
+$ razorpay orders create --amount 50000 --currency INR --receipt order-001
+{
+  "id": "order_RB58MiP5SPFYyM",
+  "entity": "order",
+  "amount": 50000,
+  "amount_paid": 0,
+  "amount_due": 50000,
+  "currency": "INR",
+  "receipt": "order-001",
+  "status": "created",
+  "attempts": 0,
+  "notes": [],
+  "created_at": 1756455561
+}
 ```
+
+### Fetch an order
+
+```bash
+$ razorpay orders fetch order_RB58MiP5SPFYyM
+{
+  "id": "order_RB58MiP5SPFYyM",
+  "entity": "order",
+  "amount": 50000,
+  "amount_paid": 0,
+  "amount_due": 50000,
+  "currency": "INR",
+  "receipt": "order-001",
+  "status": "created",
+  "attempts": 0,
+  "notes": [],
+  "created_at": 1756455561
+}
+```
+
+### List recent payments
+
+```bash
+$ razorpay payments list --count 2
+{
+  "entity": "collection",
+  "count": 2,
+  "items": [
+    {
+      "id": "pay_29QQoUBi66xm2f",
+      "entity": "payment",
+      "amount": 50000,
+      "currency": "INR",
+      "status": "captured",
+      "order_id": "order_RB58MiP5SPFYyM",
+      "method": "card",
+      "captured": true,
+      "created_at": 1756455622
+    },
+    {
+      "id": "pay_29QQjUNkbFbiY8",
+      "entity": "payment",
+      "amount": 12500,
+      "currency": "INR",
+      "status": "authorized",
+      "order_id": "order_RAxxJYS92AKL8z",
+      "method": "upi",
+      "captured": false,
+      "created_at": 1756342140
+    }
+  ]
+}
+```
+
+### Create a customer
+
+```bash
+$ razorpay customers create --name "Ada Lovelace" --email ada@example.com --contact 9876543210
+{
+  "id": "cust_1Aa00000000004",
+  "entity": "customer",
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "contact": "9876543210",
+  "gstin": null,
+  "notes": [],
+  "created_at": 1756455800
+}
+```
+
+### Create a payment link
+
+```bash
+$ razorpay payment-links create \
+    --amount 30000 --currency INR \
+    --customer-name "Ada Lovelace" --customer-email ada@example.com --customer-contact 9876543210 \
+    --description "Invoice 0042" --reference-id INV-0042
+{
+  "id": "plink_LFhRgkn8nfx6vY",
+  "entity": "payment_link",
+  "amount": 30000,
+  "currency": "INR",
+  "status": "created",
+  "short_url": "https://rzp.io/i/abc123",
+  "reference_id": "INV-0042",
+  "description": "Invoice 0042",
+  "customer": {
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "contact": "9876543210"
+  },
+  "created_at": 1756455900
+}
+```
+
+### Errors
+
+Errors are surfaced with the HTTP status and the API's response body, so they're easy to grep for in CI:
+
+```bash
+$ razorpay orders fetch order_does_not_exist
+Error: API request failed with status 400: {"error":{"code":"BAD_REQUEST_ERROR","description":"The id provided does not exist"}}
+```
+
+Run `razorpay <group> --help` to list subcommands, or `razorpay <group> <subcommand> --help` for flags and examples.
 
 ## Commands
 
@@ -68,8 +191,6 @@ razorpay payments list --count 5
 | `settlements`   | Settlements and reconciliation                        |
 | `disputes`      | Disputes                                              |
 | `documents`     | Documents                                             |
-
-Run `razorpay <group> --help` to list subcommands, or `razorpay <group> <subcommand> --help` for flags and examples.
 
 ## Repository layout
 
@@ -92,17 +213,22 @@ CHANGELOG.md         release notes
 
 To add a subcommand to an existing resource, drop a new file into `cmd/<resource>/` and register it on `Cmd` inside that package's `<resource>.go`. To add a new top-level resource, mirror an existing folder and add `rootCmd.AddCommand(<pkg>.Cmd)` in `cmd/root.go`.
 
-## Tests
-
-The end-to-end suite under [`tests/`](tests/) runs the compiled CLI as a subprocess against the Razorpay **test** API. It is gated by the `e2e` build tag so a plain `go test ./...` skips it.
+## Build and test
 
 ```bash
-export RAZORPAY_TEST_KEY_ID=rzp_test_xxxxxxxxxxxx
-export RAZORPAY_TEST_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
-go test -tags=e2e -v ./tests/...
+make build   # compile the razorpay binary (output in ./razorpay)
+make test    # run the end-to-end suite against the live API
 ```
 
-See [tests/README.md](tests/README.md) for the env variables that unlock destructive subtests (`payments capture`, `refunds create`, `disputes accept`, etc.).
+The end-to-end suite lives in [`tests/`](tests/) and is gated by the `e2e` build tag. `make test` exits with a non-zero status unless `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` are exported in the environment:
+
+```bash
+export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
+export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
+make test
+```
+
+See [tests/README.md](tests/README.md) for the layout of the test suite and how each resource is exercised.
 
 ## Documentation
 
