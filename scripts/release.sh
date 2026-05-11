@@ -135,7 +135,7 @@ git add CHANGELOG.md
 if [ "${readme_changed}" -eq 1 ]; then
     git add README.md
 fi
-git commit -m "chore: release ${version}"
+git commit -m "Release ${version}"
 git tag "${version}"
 git push origin "${current_branch}"
 git push origin "${version}"
