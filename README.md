@@ -1,154 +1,112 @@
 # Razorpay CLI
 
-A command-line interface for the [Razorpay API](https://razorpay.com/docs/api/). Interact with payments, orders, customers, refunds, settlements, and disputes directly from your terminal.
+Command-line interface for the [Razorpay API](https://razorpay.com/docs/api/). Manage payments, orders, customers, invoices, refunds, settlements, disputes, payment links, QR codes, subscriptions, Route, and Smart Collect from your terminal.
 
 ## Installation
 
-```bash
-go install github.com/razorpay/razorpay-cli@latest
-```
-
-### Prerequisites
-
-- Go 1.21 or later
-
-### Install from source
+Recommended — install the latest release for your platform:
 
 ```bash
-git clone https://github.com/razorpay/razorpay-cli.git
-cd razorpay-cli
-go build -o razorpay .
+curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
 ```
 
-Move the binary somewhere on your `PATH`:
-
-```bash
-mv razorpay /usr/local/bin/razorpay
-```
-
-### Install with `go install`
-
-```bash
-go install github.com/razorpay/razorpay-cli@latest
-```
+Alternatives (`go install`, manual download, build from source) are in [docs/install.md](docs/install.md).
 
 ## Configuration
 
-### Interactive setup
-
-Run the configure command and enter your API Key ID and Key Secret when prompted. The key secret input is masked.
+Run `configure` interactively. Existing values are shown in brackets; press Enter to keep them. The secret is masked.
 
 ```bash
 razorpay configure
 ```
 
-Credentials are saved to `~/.razorpay/config.yaml`.
+Or pass credentials via flags — any flag you omit is prompted for:
 
-### Environment variables
+```bash
+razorpay configure --key-id rzp_test_xxxxxxxxxxxx --key-secret xxxxxxxxxxxxxxxxxxxx
+```
 
-Set credentials via environment variables to override the config file. This is useful in CI/CD environments.
+Credentials are stored in `~/.razorpay/config.yaml`. Environment variables override the file:
 
 ```bash
 export RAZORPAY_KEY_ID=rzp_test_xxxxxxxxxxxx
 export RAZORPAY_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
 ```
 
-You can generate API keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/app/website-app-settings/api-keys). Use `rzp_test_` keys for development and `rzp_live_` keys for production.
+Generate keys from the [Razorpay Dashboard](https://dashboard.razorpay.com/app/website-app-settings/api-keys) — `rzp_test_` for development, `rzp_live_` for production.
 
-## Hello World
+## Quick start
 
-The following walkthrough creates an order and then fetches it back. These are the two most fundamental operations in the Razorpay payment flow.
-
-### Step 1 -- Configure credentials
+Amounts are always in the smallest currency unit (paise for INR).
 
 ```bash
-razorpay configure
-# Key ID: rzp_test_xxxxxxxxxxxx
-# Key Secret: (hidden)
-# Credentials saved to /Users/you/.razorpay/config.yaml
-```
+# Create an order
+razorpay orders create --amount 5000 --currency INR --receipt order-001
 
-### Step 2 -- Create an order
-
-An order represents a payment intent. Amounts are always in the smallest currency unit (paise for INR).
-
-```bash
-razorpay orders create --amount 5000 --currency INR --receipt "order-001"
-```
-
-Expected output:
-
-```json
-{
-  "id": "order_RB58MiP5SPFYyM",
-  "entity": "order",
-  "amount": 5000,
-  "amount_paid": 0,
-  "amount_due": 5000,
-  "currency": "INR",
-  "receipt": "order-001",
-  "status": "created",
-  "attempts": 0,
-  "created_at": 1756455561
-}
-```
-
-### Step 3 -- Fetch the order
-
-Use the `id` from the previous response to fetch the order.
-
-```bash
+# Fetch it back (use the id from the response above)
 razorpay orders fetch order_RB58MiP5SPFYyM
-```
 
-### Step 4 -- List recent payments
-
-Once a customer completes payment against the order, it appears in the payments list.
-
-```bash
+# List recent payments
 razorpay payments list --count 5
 ```
 
-## Available Commands
+## Commands
 
-| Command                                 | Description                              |
-| --------------------------------------- | ---------------------------------------- |
-| `razorpay configure`                    | Save API credentials to config file      |
-| `razorpay payments list`                | List payments                            |
-| `razorpay payments fetch <id>`          | Fetch a payment by ID                    |
-| `razorpay payments capture <id>`        | Capture an authorized payment            |
-| `razorpay payments update <id>`         | Update payment metadata                  |
-| `razorpay payments transfers <id>`      | Fetch transfers for a payment            |
-| `razorpay orders list`                  | List orders                              |
-| `razorpay orders fetch <id>`            | Fetch an order by ID                     |
-| `razorpay orders create`                | Create a new order                       |
-| `razorpay orders update <id>`           | Update an order                          |
-| `razorpay orders payments <id>`         | Fetch payments for an order              |
-| `razorpay customers list`               | List customers                           |
-| `razorpay customers fetch <id>`         | Fetch a customer by ID                   |
-| `razorpay customers create`             | Create a new customer                    |
-| `razorpay customers update <id>`        | Update a customer                        |
-| `razorpay refunds list`                 | List refunds                             |
-| `razorpay refunds fetch <id>`           | Fetch a refund by ID                     |
-| `razorpay refunds create <payment_id>`  | Create a refund for a payment            |
-| `razorpay refunds update <id>`          | Update a refund                          |
-| `razorpay settlements list`             | List settlements                         |
-| `razorpay settlements fetch <id>`       | Fetch a settlement by ID                 |
-| `razorpay settlements recon`            | Fetch settlement recon report            |
-| `razorpay disputes list`                | List disputes                            |
-| `razorpay disputes fetch <id>`          | Fetch a dispute by ID                    |
-| `razorpay disputes accept <id>`         | Accept a dispute                         |
-| `razorpay disputes contest <id>`        | Contest a dispute                        |
+| Group           | What it manages                                       |
+| --------------- | ----------------------------------------------------- |
+| `configure`     | Save API credentials                                  |
+| `payments`      | Payments — capture, card details, downtime, transfers |
+| `orders`        | Orders                                                |
+| `customers`     | Customers                                             |
+| `refunds`       | Refunds                                               |
+| `invoices`      | Invoices and line items                               |
+| `payment-links` | Payment Links                                         |
+| `qr-codes`      | QR Codes                                              |
+| `subscriptions` | Subscriptions and plans                               |
+| `route`         | Route — linked accounts and transfers                 |
+| `smart-collect` | Smart Collect — virtual accounts                      |
+| `settlements`   | Settlements and reconciliation                        |
+| `disputes`      | Disputes                                              |
+| `documents`     | Documents                                             |
 
-Run `razorpay [command] --help` for flags and usage details on any command.
+Run `razorpay <group> --help` to list subcommands, or `razorpay <group> <subcommand> --help` for flags and examples.
+
+## Repository layout
+
+```
+cmd/
+  <resource>/        one package per resource (payments, orders, ...)
+    <resource>.go      parent Cmd + subcommand registration
+    <subcommand>.go    one file per subcommand (list.go, fetch.go, ...)
+  cmdutil/           shared client + error helpers
+  configure.go       `configure` command (lives in package cmd directly)
+  root.go            root command + subpackage wiring
+api/                 HTTP client — auth, JSON pretty-print, multipart upload
+config/              config file + env-var loader (viper)
+tests/               end-to-end test suite (build tag `e2e`)
+docs/                per-resource usage guides
+install.sh           platform installer
+AGENTS.md            agent guidance for this repo
+CHANGELOG.md         release notes
+```
+
+To add a subcommand to an existing resource, drop a new file into `cmd/<resource>/` and register it on `Cmd` inside that package's `<resource>.go`. To add a new top-level resource, mirror an existing folder and add `rootCmd.AddCommand(<pkg>.Cmd)` in `cmd/root.go`.
+
+## Tests
+
+The end-to-end suite under [`tests/`](tests/) runs the compiled CLI as a subprocess against the Razorpay **test** API. It is gated by the `e2e` build tag so a plain `go test ./...` skips it.
+
+```bash
+export RAZORPAY_TEST_KEY_ID=rzp_test_xxxxxxxxxxxx
+export RAZORPAY_TEST_KEY_SECRET=xxxxxxxxxxxxxxxxxxxx
+go test -tags=e2e -v ./tests/...
+```
+
+See [tests/README.md](tests/README.md) for the env variables that unlock destructive subtests (`payments capture`, `refunds create`, `disputes accept`, etc.).
 
 ## Documentation
 
-Detailed usage guides for each resource are in the [docs/](docs/) directory.
-
-- [Payments](docs/payments.md)
-- [Orders](docs/orders.md)
-- [Customers](docs/customers.md)
-- [Refunds](docs/refunds.md)
-- [Settlements](docs/settlements.md)
-- [Disputes](docs/disputes.md)
+- [docs/install.md](docs/install.md) — platform-specific install
+- Per-resource guides: [payments](docs/payments.md) · [orders](docs/orders.md) · [customers](docs/customers.md) · [refunds](docs/refunds.md) · [settlements](docs/settlements.md) · [disputes](docs/disputes.md)
+- [CHANGELOG.md](CHANGELOG.md) — release notes
+- [AGENTS.md](AGENTS.md) — agent guidance for working in this repository
