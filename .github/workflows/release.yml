@@ -1,0 +1,195 @@
+name: Release
+# Builds binaries and uploads them to the non-prod S3 bucket.
+# To promote a validated version to prod, run the "Promote to Production" workflow manually.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      republish_version:
+        description: 'Re-publish a specific version to latest/ (e.g. 1.0.1). Skips build jobs and runs publish-latest only.'
+        required: false
+        default: ''
+
+# ---------------------------------------------------------------------------
+# macOS — binary archives
+# ---------------------------------------------------------------------------
+jobs:
+  release-mac:
+    name: Release (macOS)
+    runs-on: macos-latest
+    permissions:
+      id-token: write   # required for OIDC token request
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Run GoReleaser (mac)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --config .goreleaser/mac.yml --clean --skip=validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
+
+# ---------------------------------------------------------------------------
+# Linux — binary archives + .deb + .rpm packages
+# ---------------------------------------------------------------------------
+  release-linux:
+    name: Release (Linux)
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Run GoReleaser (linux)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --config .goreleaser/linux.yml --clean --skip=validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
+
+# ---------------------------------------------------------------------------
+# Windows — binary zip archives
+# ---------------------------------------------------------------------------
+  release-windows:
+    name: Release (Windows)
+    runs-on: windows-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Run GoReleaser (windows)
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --config .goreleaser/windows.yml --clean --skip=validate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
+
+# ---------------------------------------------------------------------------
+# Write latest version marker to S3 — runs after all platform jobs succeed
+# ---------------------------------------------------------------------------
+  publish-latest:
+    name: Publish latest marker and install script
+    runs-on: ubuntu-latest
+    needs:
+      - release-mac
+      - release-linux
+      - release-windows
+    if: ${{ always() && (needs.release-mac.result == 'success' || github.event.inputs.republish_version != '') }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Write latest file and install script to S3
+        run: |
+          if [ -n "${{ github.event.inputs.republish_version }}" ]; then
+            VERSION="v${{ github.event.inputs.republish_version }}"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="v0.0.0-next"
+          fi
+          VERSION_NUM="${VERSION#v}"
+          BUCKET="rzp-1415-prod-docs-website"
+          REGION="ap-south-1"
+
+          # Write version marker and install script
+          echo "${VERSION}" | aws s3 cp - \
+            s3://${BUCKET}/cli/latest \
+            --content-type text/plain \
+            --region ${REGION}
+
+          aws s3 cp install.sh \
+            s3://${BUCKET}/cli/${VERSION_NUM}/install.sh \
+            --content-type text/x-shellscript \
+            --region ${REGION}
+
+          aws s3 cp install.sh \
+            s3://${BUCKET}/cli/latest/install.sh \
+            --content-type text/x-shellscript \
+            --region ${REGION}
+
+          # Copy versioned artifacts to latest/ folder with version stripped from filename
+          # --metadata-directive REPLACE prevents GoReleaser's Content-Disposition (versioned filename) from being inherited
+          # macOS
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_mac-os_arm64.tar.gz   --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz  s3://${BUCKET}/cli/latest/razorpay_mac-os_x86_64.tar.gz  --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+
+          # Linux
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_x86_64.tar.gz   s3://${BUCKET}/cli/latest/razorpay_linux_x86_64.tar.gz   --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.tar.gz    s3://${BUCKET}/cli/latest/razorpay_linux_arm64.tar.gz    --region ${REGION} --metadata-directive REPLACE --content-type application/gzip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.deb       --region ${REGION} --metadata-directive REPLACE --content-type application/vnd.debian.binary-package
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.deb       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.deb       --region ${REGION} --metadata-directive REPLACE --content-type application/vnd.debian.binary-package
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_amd64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_amd64.rpm       --region ${REGION} --metadata-directive REPLACE --content-type application/x-rpm
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_linux_arm64.rpm       s3://${BUCKET}/cli/latest/razorpay_linux_arm64.rpm       --region ${REGION} --metadata-directive REPLACE --content-type application/x-rpm
+
+          # Windows
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION} --metadata-directive REPLACE --content-type application/zip
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION} --metadata-directive REPLACE --content-type application/zip
+
+          # Checksums
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+          aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION} --metadata-directive REPLACE --content-type text/plain
