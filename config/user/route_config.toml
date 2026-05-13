@@ -1,2 +1,0 @@
-"/common.health.v2.HealthService/ReadinessCheck" = { basic_auth = false }
-"/common.health.v2.HealthService/LivenessCheck" = { basic_auth = true }
