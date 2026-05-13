@@ -2,8 +2,8 @@
 set -euo pipefail
 
 BINARY="razorpay"
-INSTALL_DIR="/usr/local/bin"
-S3_BASE_URL="https://razorpay.com/cli/latest/install.sh"
+INSTALL_DIR="$HOME/.local/bin"
+BASE_URL="https://razorpay.com/cli/latest"
 
 # ---------------------------------------------------------------------------
 # Detect OS and architecture
@@ -30,26 +30,13 @@ case "$ARCH" in
 esac
 
 # ---------------------------------------------------------------------------
-# Resolve latest version from S3
-# ---------------------------------------------------------------------------
-echo "Fetching latest version..."
-VERSION=$(curl -fsSL "${S3_BASE_URL}/latest")
-
-if [ -z "$VERSION" ]; then
-  echo "Could not determine latest version. Check your internet connection."
-  exit 1
-fi
-
-echo "Latest version: $VERSION"
-
-# ---------------------------------------------------------------------------
 # Download and extract
 # ---------------------------------------------------------------------------
-ARCHIVE="${BINARY}_${VERSION#v}_${OS_NAME}_${ARCH_NAME}.tar.gz"
-URL="${S3_BASE_URL}/${VERSION#v}/${ARCHIVE}"
+ARCHIVE="${BINARY}_${OS_NAME}_${ARCH_NAME}.tar.gz"
+URL="${BASE_URL}/${ARCHIVE}"
 TMP_DIR="$(mktemp -d)"
 
-echo "Downloading $ARCHIVE..."
+echo "Downloading ${ARCHIVE}..."
 curl -fsSL "$URL" -o "$TMP_DIR/$ARCHIVE"
 
 echo "Extracting..."
@@ -58,17 +45,36 @@ tar -xzf "$TMP_DIR/$ARCHIVE" -C "$TMP_DIR"
 # ---------------------------------------------------------------------------
 # Install
 # ---------------------------------------------------------------------------
-if [ ! -w "$INSTALL_DIR" ]; then
-  echo "Installing to $INSTALL_DIR (requires sudo)..."
-  sudo mv "$TMP_DIR/$BINARY" "$INSTALL_DIR/$BINARY"
-  sudo chmod +x "$INSTALL_DIR/$BINARY"
-else
-  mv "$TMP_DIR/$BINARY" "$INSTALL_DIR/$BINARY"
-  chmod +x "$INSTALL_DIR/$BINARY"
-fi
+mkdir -p "$INSTALL_DIR"
+mv "$TMP_DIR/$BINARY" "$INSTALL_DIR/$BINARY"
+chmod +x "$INSTALL_DIR/$BINARY"
 
 rm -rf "$TMP_DIR"
 
+# ---------------------------------------------------------------------------
+# Ensure ~/.local/bin is in PATH
+# ---------------------------------------------------------------------------
+if ! echo "$PATH" | tr ':' '\n' | grep -q "^$INSTALL_DIR$"; then
+  SHELL_NAME="$(basename "$SHELL")"
+  case "$SHELL_NAME" in
+    zsh)  PROFILE="$HOME/.zshrc" ;;
+    bash) PROFILE="$HOME/.bashrc" ;;
+    *)    PROFILE="$HOME/.profile" ;;
+  esac
+
+  EXPORT_LINE="export PATH=\"\$HOME/.local/bin:\$PATH\""
+
+  if ! grep -qF '.local/bin' "$PROFILE" 2>/dev/null; then
+    echo "" >> "$PROFILE"
+    echo "$EXPORT_LINE" >> "$PROFILE"
+    echo "Added $INSTALL_DIR to PATH in $PROFILE"
+  fi
+
+  echo ""
+  echo "NOTE: Run 'source $PROFILE' or open a new terminal for the PATH change to take effect."
+fi
+
+VERSION=$("$INSTALL_DIR/$BINARY" --version 2>/dev/null || echo "unknown")
 echo ""
-echo "razorpay $VERSION installed to $INSTALL_DIR/$BINARY"
+echo "razorpay ${VERSION} installed to $INSTALL_DIR/$BINARY"
 echo "Run 'razorpay configure' to set up your API credentials."
