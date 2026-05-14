@@ -14,7 +14,6 @@ linters:
     - iface
     - ineffassign
     - interfacebloat
-    - lll
     - makezero
     - misspell
     - revive
@@ -32,9 +31,6 @@ linters:
         - identical
     interfacebloat:
       max: 5
-    lll:
-      line-length: 100
-      tab-width: 1
     revive:
       rules:
         - name: blank-imports
@@ -66,11 +62,8 @@ formatters:
       sections:
         - standard
         - default
-        - prefix(github.com/razorpay/goutils)
-        - prefix(github.com/razorpay/go-foundation-v2)
       custom-order: true
     golines:
-      max-len: 100
       reformat-tags: false
   exclusions:
     generated: lax
