@@ -1,6 +1,7 @@
 package smartcollect
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/razorpay/razorpay-cli/api"
@@ -11,58 +12,61 @@ import (
 var tpvCreateCmd = &cobra.Command{
 	Use:   "tpv-create",
 	Short: "Create a TPV (Third-Party Validation) virtual account with allowed payers",
+	Long: `Create a TPV virtual account with allowed payers.
+
+Pass --allowed-payers as a JSON array. Each element supports: type, bank_account.ifsc, bank_account.account_number
+
+Example:
+  razorpay smart-collect tpv-create \
+    --receiver-type bank_account \
+    --bank-account-descriptor "ACME Corp" \
+    --allowed-payers '[
+      {"type":"bank_account","bank_account":{"ifsc":"UTIB0000001","account_number":"9876543210123456"}},
+      {"type":"bank_account","bank_account":{"ifsc":"HDFC0000002","account_number":"1234567890123456"}}
+    ]'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := cmdutil.NewClient()
 
-		ifscList, _ := cmd.Flags().GetStringArray("ifsc")
-		accountNumberList, _ := cmd.Flags().GetStringArray("account-number")
+		receiverTypes, _ := cmd.Flags().GetStringArray("receiver-type")
+		bankDescriptor, _ := cmd.Flags().GetString("bank-account-descriptor")
+		allowedPayersJSON, _ := cmd.Flags().GetString("allowed-payers")
 
-		if len(ifscList) == 0 || len(accountNumberList) == 0 {
-			return fmt.Errorf("at least one --ifsc and --account-number pair is required")
+		if len(receiverTypes) == 0 {
+			return fmt.Errorf("at least one --receiver-type is required (e.g. --receiver-type bank_account)")
 		}
-		if len(ifscList) != len(accountNumberList) {
-			return fmt.Errorf("--ifsc and --account-number must be provided in equal numbers (one pair per payer)")
-		}
-		if len(ifscList) > 10 {
-			return fmt.Errorf("maximum 10 allowed payers permitted")
+		if allowedPayersJSON == "" {
+			return fmt.Errorf("--allowed-payers is required (JSON array of payer objects)")
 		}
 
-		allowedPayers := make([]map[string]any, len(ifscList))
-		for i := range ifscList {
-			allowedPayers[i] = map[string]any{
-				"type": "bank_account",
-				"bank_account": map[string]any{
-					"ifsc":           ifscList[i],
-					"account_number": accountNumberList[i],
-				},
+		var allowedPayers any
+		if err := json.Unmarshal([]byte(allowedPayersJSON), &allowedPayers); err != nil {
+			return fmt.Errorf("--allowed-payers is not valid JSON: %w", err)
+		}
+
+		receivers := map[string]any{
+			"types": receiverTypes,
+		}
+		if bankDescriptor != "" {
+			receivers["bank_account"] = map[string]any{
+				"descriptor": bankDescriptor,
 			}
 		}
 
 		body := map[string]any{
-			"receivers": map[string]any{
-				"types": []string{"bank_account"},
-			},
+			"receivers":      receivers,
 			"allowed_payers": allowedPayers,
 		}
 
-		name, _ := cmd.Flags().GetString("name")
 		description, _ := cmd.Flags().GetString("description")
 		customerID, _ := cmd.Flags().GetString("customer-id")
-		amountExpected, _ := cmd.Flags().GetInt64("amount-expected")
 		closeBy, _ := cmd.Flags().GetInt64("close-by")
 		notes, _ := cmd.Flags().GetStringArray("note")
 
-		if name != "" {
-			body["name"] = name
-		}
 		if description != "" {
 			body["description"] = description
 		}
 		if customerID != "" {
 			body["customer_id"] = customerID
-		}
-		if amountExpected > 0 {
-			body["amount_expected"] = amountExpected
 		}
 		if closeBy > 0 {
 			body["close_by"] = closeBy
@@ -87,12 +91,11 @@ var tpvCreateCmd = &cobra.Command{
 func init() {
 	Cmd.AddCommand(tpvCreateCmd)
 
-	tpvCreateCmd.Flags().StringArray("ifsc", nil, "Bank IFSC code for an allowed payer (repeatable, one per payer)")
-	tpvCreateCmd.Flags().StringArray("account-number", nil, "Bank account number for an allowed payer (repeatable, one per payer)")
-	tpvCreateCmd.Flags().String("name", "", "Name for the virtual account")
+	tpvCreateCmd.Flags().StringArray("receiver-type", nil, "Receiver type (repeatable, e.g. --receiver-type bank_account)")
+	tpvCreateCmd.Flags().String("bank-account-descriptor", "", "Bank account descriptor (identifier label for the bank account receiver)")
+	tpvCreateCmd.Flags().String("allowed-payers", "", `Allowed payers as a JSON array (required, max 10). Each object: {"type":"bank_account","bank_account":{"ifsc":"...","account_number":"..."}}`)
 	tpvCreateCmd.Flags().String("description", "", "Description of the virtual account")
 	tpvCreateCmd.Flags().String("customer-id", "", "Customer ID to associate with this virtual account")
-	tpvCreateCmd.Flags().Int64("amount-expected", 0, "Expected payment amount in paise")
-	tpvCreateCmd.Flags().Int64("close-by", 0, "Unix timestamp for automatic closure")
+	tpvCreateCmd.Flags().Int64("close-by", 0, "Unix timestamp for automatic closure (min 15 mins from now)")
 	tpvCreateCmd.Flags().StringArray("note", nil, "Note as key=value (repeatable)")
 }

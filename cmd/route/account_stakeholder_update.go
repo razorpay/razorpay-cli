@@ -27,12 +27,12 @@ var stakeholderUpdateCmd = &cobra.Command{
 		}
 
 		relationship := map[string]any{}
-		if cmd.Flags().Changed("is-director") {
-			v, _ := cmd.Flags().GetBool("is-director")
+		if cmd.Flags().Changed("relationship-director") {
+			v, _ := cmd.Flags().GetBool("relationship-director")
 			relationship["director"] = v
 		}
-		if cmd.Flags().Changed("is-executive") {
-			v, _ := cmd.Flags().GetBool("is-executive")
+		if cmd.Flags().Changed("relationship-executive") {
+			v, _ := cmd.Flags().GetBool("relationship-executive")
 			relationship["executive"] = v
 		}
 		if len(relationship) > 0 {
@@ -97,8 +97,8 @@ func init() {
 	stakeholderUpdateCmd.Flags().String("name", "", "Stakeholder name as per PAN card")
 	stakeholderUpdateCmd.Flags().String("email", "", "Stakeholder email address")
 	stakeholderUpdateCmd.Flags().Float64("percentage-ownership", 0, "Ownership percentage (max 2 decimal places)")
-	stakeholderUpdateCmd.Flags().Bool("is-director", false, "Stakeholder is a director")
-	stakeholderUpdateCmd.Flags().Bool("is-executive", false, "Stakeholder is an executive")
+	stakeholderUpdateCmd.Flags().Bool("relationship-director", false, "Stakeholder is a director")
+	stakeholderUpdateCmd.Flags().Bool("relationship-executive", false, "Stakeholder is an executive")
 	stakeholderUpdateCmd.Flags().String("phone-primary", "", "Primary phone number")
 	stakeholderUpdateCmd.Flags().String("phone-secondary", "", "Secondary phone number")
 	stakeholderUpdateCmd.Flags().String("street", "", "Residential street address")

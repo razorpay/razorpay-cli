@@ -33,5 +33,5 @@ var pauseCmd = &cobra.Command{
 func init() {
 	Cmd.AddCommand(pauseCmd)
 
-	pauseCmd.Flags().String("pause-at", "now", "When to pause: now or cycle_end")
+	pauseCmd.Flags().String("pause-at", "now", "When to pause: now")
 }

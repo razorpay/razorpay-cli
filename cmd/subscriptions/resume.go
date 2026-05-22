@@ -33,5 +33,5 @@ var resumeCmd = &cobra.Command{
 func init() {
 	Cmd.AddCommand(resumeCmd)
 
-	resumeCmd.Flags().String("resume-at", "now", "When to resume: now or cycle_end")
+	resumeCmd.Flags().String("resume-at", "now", "When to resume: now")
 }

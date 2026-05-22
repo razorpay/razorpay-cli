@@ -1,6 +1,7 @@
 package route
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/razorpay/razorpay-cli/api"
@@ -11,56 +12,41 @@ import (
 var transferFromOrderCmd = &cobra.Command{
 	Use:   "create-from-order",
 	Short: "Create an order with embedded transfers to linked accounts",
+	Long: `Create an order with one or more transfers to linked accounts.
+
+	Pass the transfers as a JSON array via --transfers. Each element supports:
+  	account, amount, currency, notes, linked_account_notes, on_hold, on_hold_until
+
+	Example:
+  	razorpay route transfers create-from-order --amount 50000 \
+    --transfers '[
+      {"account":"acc_ABC","amount":10000,"currency":"INR","notes":{"branch":"south"},"linked_account_notes":["branch"]},
+      {"account":"acc_XYZ","amount":20000,"currency":"INR","on_hold":true}
+    ]'`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		client := cmdutil.NewClient()
 
 		amount, _ := cmd.Flags().GetInt64("amount")
 		currency, _ := cmd.Flags().GetString("currency")
 		receipt, _ := cmd.Flags().GetString("receipt")
-		account, _ := cmd.Flags().GetString("account")
-		transferAmount, _ := cmd.Flags().GetInt64("transfer-amount")
-		transferCurrency, _ := cmd.Flags().GetString("transfer-currency")
-		onHoldUntil, _ := cmd.Flags().GetInt64("on-hold-until")
-		linkedAccountNotes, _ := cmd.Flags().GetStringArray("linked-account-note")
-		notes, _ := cmd.Flags().GetStringArray("note")
+		transfersJSON, _ := cmd.Flags().GetString("transfers")
 
 		if amount == 0 {
 			return fmt.Errorf("--amount is required")
 		}
-		if account == "" {
-			return fmt.Errorf("--account is required")
-		}
-		if transferAmount == 0 {
-			return fmt.Errorf("--transfer-amount is required")
+		if transfersJSON == "" {
+			return fmt.Errorf("--transfers is required (JSON array of transfer objects)")
 		}
 
-		transfer := map[string]any{
-			"account":  account,
-			"amount":   transferAmount,
-			"currency": transferCurrency,
-		}
-		if cmd.Flags().Changed("on-hold") {
-			onHold, _ := cmd.Flags().GetBool("on-hold")
-			transfer["on_hold"] = onHold
-		}
-		if onHoldUntil > 0 {
-			transfer["on_hold_until"] = onHoldUntil
-		}
-		if len(linkedAccountNotes) > 0 {
-			transfer["linked_account_notes"] = linkedAccountNotes
-		}
-		if len(notes) > 0 {
-			notesMap, err := api.ParseParams(notes)
-			if err != nil {
-				return err
-			}
-			transfer["notes"] = notesMap
+		var transfers any
+		if err := json.Unmarshal([]byte(transfersJSON), &transfers); err != nil {
+			return fmt.Errorf("--transfers is not valid JSON: %w", err)
 		}
 
 		body := map[string]any{
 			"amount":    amount,
 			"currency":  currency,
-			"transfers": []any{transfer},
+			"transfers": transfers,
 		}
 		if receipt != "" {
 			body["receipt"] = receipt
@@ -81,11 +67,5 @@ func init() {
 	transferFromOrderCmd.Flags().Int64("amount", 0, "Order amount in paise (required)")
 	transferFromOrderCmd.Flags().String("currency", "INR", "Order currency code (default INR)")
 	transferFromOrderCmd.Flags().String("receipt", "", "Order receipt / reference identifier")
-	transferFromOrderCmd.Flags().String("account", "", "Linked account ID to transfer to (required)")
-	transferFromOrderCmd.Flags().Int64("transfer-amount", 0, "Transfer amount in paise (required)")
-	transferFromOrderCmd.Flags().String("transfer-currency", "INR", "Transfer currency code (default INR)")
-	transferFromOrderCmd.Flags().Bool("on-hold", false, "Put the transfer settlement on hold")
-	transferFromOrderCmd.Flags().Int64("on-hold-until", 0, "Unix timestamp until which settlement is held")
-	transferFromOrderCmd.Flags().StringArray("linked-account-note", nil, "Note key to expose to the linked account (repeatable)")
-	transferFromOrderCmd.Flags().StringArray("note", nil, "Note as key=value for the transfer (repeatable, max 15 pairs)")
+	transferFromOrderCmd.Flags().String("transfers", "", `Transfers as a JSON array (required). Each object supports: account, amount, currency, notes, linked_account_notes, on_hold, on_hold_until`)
 }

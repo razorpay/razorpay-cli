@@ -25,6 +25,7 @@ Updatable in DRAFT state only:
 		client := cmdutil.NewClient()
 
 		description, _ := cmd.Flags().GetString("description")
+		draft, _ := cmd.Flags().GetBool("draft")
 		expireBy, _ := cmd.Flags().GetInt64("expire-by")
 		notes, _ := cmd.Flags().GetStringArray("note")
 		// draft-only
@@ -45,6 +46,9 @@ Updatable in DRAFT state only:
 		// All states
 		if description != "" {
 			body["description"] = description
+		}
+		if cmd.Flags().Changed("draft") && draft {
+			body["draft"] = "1"
 		}
 		if expireBy > 0 {
 			body["expire_by"] = expireBy
@@ -124,6 +128,7 @@ func init() {
 
 	// All states
 	updateCmd.Flags().String("description", "", "Invoice description — all states")
+	updateCmd.Flags().Bool("draft", false, "Set invoice to draft state (sends value \"1\" to API)")
 	updateCmd.Flags().Int64("expire-by", 0, "Invoice expiry as Unix timestamp — all states")
 	updateCmd.Flags().StringArray("note", nil, "Note as key=value (max 15 pairs) — all states")
 
