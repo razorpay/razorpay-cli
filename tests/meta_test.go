@@ -98,10 +98,9 @@ func TestValidationErrors(t *testing.T) {
 		{"payments_capture_missing_amount", []string{"payments", "capture", "pay_dummy"}, `required flag(s) "amount"`},
 		{"orders_create_missing_amount", []string{"orders", "create"}, `required flag(s) "amount"`},
 		{"refunds_create_missing_id", []string{"refunds", "create"}, "accepts 1 arg"},
-		// `disputes contest` still accepts `--param key=value` (most other
-		// commands have migrated to typed flags), so it's the canonical
-		// place to exercise ParseParams' bad-input handler.
-		{"disputes_contest_bad_param", []string{"disputes", "contest", "disp_x", "--param", "noequals"}, "expected format key=value"},
+		// `disputes contest` now uses typed flags; verify that at least
+		// one flag is required.
+		{"disputes_contest_no_flags", []string{"disputes", "contest", "disp_x"}, "at least one flag is required"},
 		{"unknown_command", []string{"bogus"}, "unknown command"},
 	}
 	for _, c := range cases {

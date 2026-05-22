@@ -474,8 +474,7 @@ func TestSmartCollectLifecycle(t *testing.T) {
 		resp := runOrSkipJSON(t, "smart-collect", "create",
 			"--receiver-type", "bank_account",
 			"--customer-id", custID,
-			"--description", "razorpay-cli e2e",
-			"--name", "E2E VA "+uniqSuffix())
+			"--description", "razorpay-cli e2e")
 		requireEntity(t, resp, "virtual_account")
 		vaID = strField(resp, "id")
 	})
@@ -565,7 +564,7 @@ func TestRouteAccountsLifecycle(t *testing.T) {
 	})
 
 	t.Run("transfer_list", func(t *testing.T) {
-		runOrSkipJSON(t, "route", "transfers", "list", "--count", "5")
+		runOrSkipJSON(t, "route", "transfers", "list")
 	})
 }
 
@@ -696,7 +695,7 @@ func TestDisputesListDriven(t *testing.T) {
 	var disputeID string
 
 	t.Run("list", func(t *testing.T) {
-		resp := runJSON(t, "disputes", "list", "--count", "5")
+		resp := runJSON(t, "disputes", "list")
 		if f := firstItem(t, resp); f != nil {
 			disputeID = strField(f, "id")
 		}
