@@ -32,5 +32,5 @@ var fetchCmd = &cobra.Command{
 func init() {
 	Cmd.AddCommand(fetchCmd)
 
-	fetchCmd.Flags().StringArray("expand", nil, "Expand related objects (e.g. --expand card --expand emi)")
+	fetchCmd.Flags().StringArray("expand", nil, "Expand related objects (e.g. --expand card --expand emi --expand offers)")
 }

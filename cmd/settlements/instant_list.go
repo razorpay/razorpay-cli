@@ -21,6 +21,12 @@ var instantListCmd = &cobra.Command{
 		if skip, _ := cmd.Flags().GetInt("skip"); skip > 0 {
 			q.Set("skip", fmt.Sprintf("%d", skip))
 		}
+		if from, _ := cmd.Flags().GetInt64("from"); from > 0 {
+			q.Set("from", fmt.Sprintf("%d", from))
+		}
+		if to, _ := cmd.Flags().GetInt64("to"); to > 0 {
+			q.Set("to", fmt.Sprintf("%d", to))
+		}
 		if expands, _ := cmd.Flags().GetStringArray("expand"); len(expands) > 0 {
 			for _, e := range expands {
 				q.Add("expand[]", e)
@@ -40,5 +46,7 @@ func init() {
 
 	instantListCmd.Flags().Int("count", 10, "Number of instant settlements to fetch (max 100)")
 	instantListCmd.Flags().Int("skip", 0, "Number of instant settlements to skip")
+	instantListCmd.Flags().Int64("from", 0, "Unix timestamp: fetch instant settlements created after this time")
+	instantListCmd.Flags().Int64("to", 0, "Unix timestamp: fetch instant settlements created before this time")
 	instantListCmd.Flags().StringArray("expand", nil, "Expand related objects (e.g. --expand ondemand_payouts)")
 }

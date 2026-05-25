@@ -20,7 +20,14 @@ var fetchByUTRCmd = &cobra.Command{
 		client := cmdutil.NewClient()
 		q := url.Values{}
 		q.Set("va_transaction_id", vaTransactionID)
-		q.Set("virtual_account", "1")
+		if cmd.Flags().Changed("virtual-account") {
+			va, _ := cmd.Flags().GetBool("virtual-account")
+			if va {
+				q.Set("virtual_account", "1")
+			} else {
+				q.Set("virtual_account", "0")
+			}
+		}
 		if count, _ := cmd.Flags().GetInt("count"); count > 0 {
 			q.Set("count", fmt.Sprintf("%d", count))
 		}
@@ -40,6 +47,7 @@ func init() {
 	Cmd.AddCommand(fetchByUTRCmd)
 
 	fetchByUTRCmd.Flags().String("va-transaction-id", "", "Virtual account transaction ID / UTR (required)")
+	fetchByUTRCmd.Flags().Bool("virtual-account", true, "Filter for virtual account payments (default true)")
 	fetchByUTRCmd.Flags().Int("count", 10, "Number of payments to fetch (max 100)")
 	fetchByUTRCmd.Flags().Int("skip", 0, "Number of payments to skip")
 }

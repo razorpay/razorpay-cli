@@ -16,10 +16,8 @@ var createCmd = &cobra.Command{
 		receiverTypes, _ := cmd.Flags().GetStringArray("receiver-type")
 		bankDescriptor, _ := cmd.Flags().GetString("bank-account-descriptor")
 		vpaDescriptor, _ := cmd.Flags().GetString("vpa-descriptor")
-		name, _ := cmd.Flags().GetString("name")
 		description, _ := cmd.Flags().GetString("description")
 		customerID, _ := cmd.Flags().GetString("customer-id")
-		amountExpected, _ := cmd.Flags().GetInt64("amount-expected")
 		closeBy, _ := cmd.Flags().GetInt64("close-by")
 		notes, _ := cmd.Flags().GetStringArray("note")
 
@@ -43,17 +41,11 @@ var createCmd = &cobra.Command{
 		body := map[string]any{
 			"receivers": receivers,
 		}
-		if name != "" {
-			body["name"] = name
-		}
 		if description != "" {
 			body["description"] = description
 		}
 		if customerID != "" {
 			body["customer_id"] = customerID
-		}
-		if amountExpected > 0 {
-			body["amount_expected"] = amountExpected
 		}
 		if closeBy > 0 {
 			body["close_by"] = closeBy
@@ -81,10 +73,8 @@ func init() {
 	createCmd.Flags().StringArray("receiver-type", nil, "Receiver type: bank_account or vpa (required, repeatable)")
 	createCmd.Flags().String("bank-account-descriptor", "", "Bank account descriptor (identifier label for the bank account receiver)")
 	createCmd.Flags().String("vpa-descriptor", "", "VPA descriptor (identifier label for the VPA receiver)")
-	createCmd.Flags().String("name", "", "Name for the virtual account")
 	createCmd.Flags().String("description", "", "Description of the virtual account")
 	createCmd.Flags().String("customer-id", "", "Customer ID to associate with this virtual account")
-	createCmd.Flags().Int64("amount-expected", 0, "Expected payment amount in paise (0 = any amount)")
 	createCmd.Flags().Int64("close-by", 0, "Unix timestamp for automatic closure (min 15 minutes from now)")
 	createCmd.Flags().StringArray("note", nil, "Note as key=value (repeatable, max 15 pairs)")
 }

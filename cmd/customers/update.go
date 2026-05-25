@@ -15,8 +15,6 @@ var updateCmd = &cobra.Command{
 		name, _ := cmd.Flags().GetString("name")
 		email, _ := cmd.Flags().GetString("email")
 		contact, _ := cmd.Flags().GetString("contact")
-		gstin, _ := cmd.Flags().GetString("gstin")
-		notes, _ := cmd.Flags().GetStringArray("note")
 
 		body := map[string]interface{}{}
 		if name != "" {
@@ -27,16 +25,6 @@ var updateCmd = &cobra.Command{
 		}
 		if contact != "" {
 			body["contact"] = contact
-		}
-		if gstin != "" {
-			body["gstin"] = gstin
-		}
-		if len(notes) > 0 {
-			notesMap, err := api.ParseParams(notes)
-			if err != nil {
-				return err
-			}
-			body["notes"] = notesMap
 		}
 
 		data, err := client.Put(basePath+"/"+args[0], body)

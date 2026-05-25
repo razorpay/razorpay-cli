@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.8 — 2026-05-22
+
+- - Added missing query params and removed undocumented ones across orders, disputes, settlements, and subscriptions - Replaced hardcoded values with configurable flags in route and smart-collect commands 
+- Accepted JSON input for complex nested arrays (transfers, allowed_payers, others) 
+- Removed transfer_fetch_by_settlement and merged its functionality into transfer list 
+- Ensured consistent flag naming between create and update commands
+
 ## v1.0.7 — 2026-05-11
 
 - Removed sudo command from the install.sh script

@@ -1,7 +1,6 @@
 package subscriptions
 
 import (
-	"fmt"
 	"net/url"
 
 	"github.com/razorpay/razorpay-cli/api"
@@ -17,12 +16,6 @@ var invoicesCmd = &cobra.Command{
 		client := cmdutil.NewClient()
 		q := url.Values{}
 		q.Set("subscription_id", args[0])
-		if count, _ := cmd.Flags().GetInt("count"); count > 0 {
-			q.Set("count", fmt.Sprintf("%d", count))
-		}
-		if skip, _ := cmd.Flags().GetInt("skip"); skip > 0 {
-			q.Set("skip", fmt.Sprintf("%d", skip))
-		}
 		data, err := client.Get("/v1/invoices", q)
 		if err != nil {
 			cmdutil.HandleErr(err)
@@ -34,7 +27,4 @@ var invoicesCmd = &cobra.Command{
 
 func init() {
 	Cmd.AddCommand(invoicesCmd)
-
-	invoicesCmd.Flags().Int("count", 10, "Number of invoices to fetch")
-	invoicesCmd.Flags().Int("skip", 0, "Number of invoices to skip")
 }

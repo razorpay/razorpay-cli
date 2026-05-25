@@ -11,12 +11,13 @@ var tpvAddPayerCmd = &cobra.Command{
 	Short: "Add an allowed payer bank account to a TPV virtual account",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		payerType, _ := cmd.Flags().GetString("type")
 		ifsc, _ := cmd.Flags().GetString("ifsc")
 		accountNumber, _ := cmd.Flags().GetString("account-number")
 		client := cmdutil.NewClient()
 
 		body := map[string]any{
-			"type": "bank_account",
+			"type": payerType,
 			"bank_account": map[string]any{
 				"ifsc":           ifsc,
 				"account_number": accountNumber,
@@ -35,6 +36,7 @@ var tpvAddPayerCmd = &cobra.Command{
 func init() {
 	Cmd.AddCommand(tpvAddPayerCmd)
 
+	tpvAddPayerCmd.Flags().String("type", "bank_account", "Payer type (default bank_account)")
 	tpvAddPayerCmd.Flags().String("ifsc", "", "Bank IFSC code of the allowed payer (required)")
 	tpvAddPayerCmd.Flags().String("account-number", "", "Bank account number of the allowed payer (required)")
 	_ = tpvAddPayerCmd.MarkFlagRequired("ifsc")
