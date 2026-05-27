@@ -1,0 +1,12 @@
+{
+  "ownership": {
+    "type": "Team Specific",
+    "business_unit": "Platforms",
+    "group": "Razorpay1",
+    "sub_group": "Razorpay1",
+    "pod": "Razorpay1",
+    "engineering_manager": {
+      "email": "prabu.ram@razorpay.com"
+    }
+  }
+}

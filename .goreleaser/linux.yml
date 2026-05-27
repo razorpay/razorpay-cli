@@ -1,0 +1,109 @@
+version: 2
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+project_name: razorpay
+
+builds:
+  - id: razorpay-linux-amd64
+    binary: razorpay
+    main: .
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos:
+      - linux
+    goarch:
+      - amd64
+
+  - id: razorpay-linux-arm64
+    binary: razorpay
+    main: .
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+    goos:
+      - linux
+    goarch:
+      - arm64
+
+archives:
+  - name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "arm64" }}arm64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - none*
+
+checksum:
+  name_template: "{{ .ProjectName }}-linux-checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+snapshot:
+  version_template: "{{ .Version }}-next"
+
+release:
+  disable: true
+
+blobs:
+  - provider: s3
+    region: ap-south-1
+    bucket: rzp-1415-prod-docs-website
+    directory: "cli/{{ .Version }}"
+
+nfpms:
+  - id: deb
+    package_name: razorpay
+    builds:
+      - razorpay-linux-amd64
+      - razorpay-linux-arm64
+    vendor: Razorpay Software Private Limited
+    homepage: https://razorpay.com
+    maintainer: Razorpay <opensource@razorpay.com>
+    description: Official CLI for the Razorpay API
+    license: MIT
+    formats:
+      - deb
+    contents:
+      - src: README.md
+        dst: /usr/share/doc/razorpay/README.md
+
+  - id: rpm
+    package_name: razorpay
+    builds:
+      - razorpay-linux-amd64
+      - razorpay-linux-arm64
+    vendor: Razorpay Software Private Limited
+    homepage: https://razorpay.com
+    maintainer: Razorpay <opensource@razorpay.com>
+    description: Official CLI for the Razorpay API
+    license: MIT
+    formats:
+      - rpm
+    contents:
+      - src: README.md
+        dst: /usr/share/doc/razorpay/README.md
