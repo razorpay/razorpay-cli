@@ -17,6 +17,18 @@ Run the install script to automatically detect your OS and architecture, downloa
 curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
 ```
 
+### Homebrew (macOS)
+
+```bash
+brew install razorpay/razorpay-cli/razorpay
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add razorpay https://github.com/razorpay/scoop-razorpay-cli.git && scoop install razorpay
+```
+
 ### macOS
 
 1. Download the binary that matches your CPU architecture.
