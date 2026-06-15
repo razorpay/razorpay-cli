@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -18,6 +19,18 @@ import (
 )
 
 const defaultBaseURL = "https://api.razorpay.com"
+
+// userAgent identifies the CLI to the Razorpay API on every request.
+// Format: "Razorpay-CLI/<version> (<os>/<arch>)" 
+var userAgent = buildUserAgent("dev")
+
+func buildUserAgent(version string) string {
+	return fmt.Sprintf("Razorpay-CLI/%s (%s/%s)", version, runtime.GOOS, runtime.GOARCH)
+}
+
+func SetUserAgentVersion(version string) {
+	userAgent = buildUserAgent(version)
+}
 
 type Client struct {
 	keyID     string
@@ -74,6 +87,7 @@ func (c *Client) doWithHeaders(method, path string, body interface{}, query url.
 		return nil, err
 	}
 	req.SetBasicAuth(c.keyID, c.keySecret)
+	req.Header.Set("User-Agent", userAgent)
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -161,6 +175,7 @@ func (c *Client) PostMultipart(path string, filePath string, fields map[string]s
 		return nil, err
 	}
 	req.SetBasicAuth(c.keyID, c.keySecret)
+	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	resp, err := c.http.Do(req)
