@@ -18,6 +18,7 @@ import (
 	"github.com/razorpay/razorpay-cli/cmd/settlements"
 	smartcollect "github.com/razorpay/razorpay-cli/cmd/smart-collect"
 	"github.com/razorpay/razorpay-cli/cmd/subscriptions"
+	"github.com/razorpay/razorpay-cli/update"
 	"github.com/spf13/cobra"
 )
 
@@ -38,6 +39,10 @@ Then run any resource command, for example:
 For help on a specific command, run:
 
   razorpay <command> --help`,
+	// Fires after every subcommand (Cobra skips it on error).
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		update.CheckOnce(cmd.Root().Version)
+	},
 }
 
 // SetVersion stamps the root command with build-time version info injected
