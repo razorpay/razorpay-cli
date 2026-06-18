@@ -42,9 +42,12 @@ For help on a specific command, run:
 
 // SetVersion stamps the root command with build-time version info injected
 // by goreleaser via -ldflags "-X main.version=... -X main.commit=... -X main.date=..."
+// The version is also pushed to the api package so every HTTP request
+// carries a User-Agent identifying this CLI build.
 func SetVersion(version, commit, date string) {
 	rootCmd.Version = version
 	rootCmd.Long = rootCmd.Long + "\n\nVersion: " + version + " (" + commit + ") built " + date
+	api.SetUserAgentVersion(version)
 }
 
 func Execute() {
