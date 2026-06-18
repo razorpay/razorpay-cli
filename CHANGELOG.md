@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.9 — 2026-06-18
+
+- feat: nudge users when a new release is available
+- feat: identify CLI to API via User-Agent header
+
 ## v1.0.8 — 2026-05-22
 
 - Added missing query params and removed undocumented ones across orders, disputes, settlements, and subscriptions - Replaced hardcoded values with configurable flags in route and smart-collect commands 
