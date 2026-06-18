@@ -26,8 +26,8 @@ SCOOP_REPO="git@github.com:razorpay/scoop-razorpay-cli.git"
 if [[ $# -ge 1 ]]; then
   VERSION="$1"
 else
-  echo "==> Auto-detecting latest version from ${BASE_URL}/latest..."
-  VERSION=$(curl -fsSL "${BASE_URL}/latest")
+  echo "==> Auto-detecting latest version from ${BASE_URL}/latest/version..."
+  VERSION=$(curl -fsSL "${BASE_URL}/latest/version")
 fi
 
 VERSION_NUM="${VERSION#v}"  # strip leading v if present
@@ -140,7 +140,7 @@ cat > "${SCOOP_DIR}/razorpay.json" <<JSON
   },
   "bin": "razorpay.exe",
   "checkver": {
-    "url": "${BASE_URL}/latest",
+    "url": "${BASE_URL}/latest/version",
     "regex": "v([\\\\d.]+)"
   },
   "autoupdate": {
@@ -190,8 +190,8 @@ if git diff --cached --quiet; then
 else
   git commit -m "Update razorpay formula to v${VERSION_NUM}"
   git push -u origin "${BRANCH_NAME}"
-  # Open a PR (skip if one already exists for this branch)
-  if HOMEBREW_PR_URL=$(gh pr view "${BRANCH_NAME}" --repo razorpay/homebrew-razorpay-cli --json url --jq '.url' 2>/dev/null); then
+  # Open a PR (skip if an open one already exists for this branch)
+  if HOMEBREW_PR_URL=$(gh pr view "${BRANCH_NAME}" --repo razorpay/homebrew-razorpay-cli --json url,state --jq 'select(.state == "OPEN") | .url' 2>/dev/null) && [[ -n "${HOMEBREW_PR_URL}" ]]; then
     echo "  PR already exists — updated branch pushed."
   else
     HOMEBREW_PR_URL=$(gh pr create \
@@ -231,8 +231,8 @@ if git diff --cached --quiet; then
 else
   git commit -m "Update razorpay manifest to v${VERSION_NUM}"
   git push -u origin "${BRANCH_NAME}"
-  # Open a PR (skip if one already exists for this branch)
-  if SCOOP_PR_URL=$(gh pr view "${BRANCH_NAME}" --repo razorpay/scoop-razorpay-cli --json url --jq '.url' 2>/dev/null); then
+  # Open a PR (skip if an open one already exists for this branch)
+  if SCOOP_PR_URL=$(gh pr view "${BRANCH_NAME}" --repo razorpay/scoop-razorpay-cli --json url,state --jq 'select(.state == "OPEN") | .url' 2>/dev/null) && [[ -n "${SCOOP_PR_URL}" ]]; then
     echo "  PR already exists — updated branch pushed."
   else
     SCOOP_PR_URL=$(gh pr create \

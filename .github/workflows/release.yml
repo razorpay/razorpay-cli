@@ -157,7 +157,7 @@ jobs:
 
           # Write version marker and install script
           echo "${VERSION}" | aws s3 cp - \
-            s3://${BUCKET}/cli/latest \
+            s3://${BUCKET}/cli/latest/version \
             --content-type text/plain \
             --region ${REGION}
 
