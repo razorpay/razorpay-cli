@@ -21,7 +21,7 @@ import (
 const defaultBaseURL = "https://api.razorpay.com"
 
 // userAgent identifies the CLI to the Razorpay API on every request.
-// Format: "Razorpay-CLI/<version> (<os>/<arch>)" 
+// Format: "Razorpay-CLI/<version> (<os>/<arch>)"
 var userAgent = buildUserAgent("dev")
 
 func buildUserAgent(version string) string {
