@@ -18,6 +18,7 @@ import (
 	"github.com/razorpay/razorpay-cli/cmd/settlements"
 	smartcollect "github.com/razorpay/razorpay-cli/cmd/smart-collect"
 	"github.com/razorpay/razorpay-cli/cmd/subscriptions"
+	"github.com/razorpay/razorpay-cli/update"
 	"github.com/spf13/cobra"
 )
 
@@ -38,13 +39,20 @@ Then run any resource command, for example:
 For help on a specific command, run:
 
   razorpay <command> --help`,
+	// Fires after every subcommand (Cobra skips it on error).
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		update.CheckOnce(cmd.Root().Version)
+	},
 }
 
 // SetVersion stamps the root command with build-time version info injected
 // by goreleaser via -ldflags "-X main.version=... -X main.commit=... -X main.date=..."
+// The version is also pushed to the api package so every HTTP request
+// carries a User-Agent identifying this CLI build.
 func SetVersion(version, commit, date string) {
 	rootCmd.Version = version
 	rootCmd.Long = rootCmd.Long + "\n\nVersion: " + version + " (" + commit + ") built " + date
+	api.SetUserAgentVersion(version)
 }
 
 func Execute() {
