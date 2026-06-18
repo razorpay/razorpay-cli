@@ -26,8 +26,8 @@ SCOOP_REPO="git@github.com:razorpay/scoop-razorpay-cli.git"
 if [[ $# -ge 1 ]]; then
   VERSION="$1"
 else
-  echo "==> Auto-detecting latest version from ${BASE_URL}/latest..."
-  VERSION=$(curl -fsSL "${BASE_URL}/latest")
+  echo "==> Auto-detecting latest version from ${BASE_URL}/latest/version..."
+  VERSION=$(curl -fsSL "${BASE_URL}/latest/version")
 fi
 
 VERSION_NUM="${VERSION#v}"  # strip leading v if present
@@ -140,7 +140,7 @@ cat > "${SCOOP_DIR}/razorpay.json" <<JSON
   },
   "bin": "razorpay.exe",
   "checkver": {
-    "url": "${BASE_URL}/latest",
+    "url": "${BASE_URL}/latest/version",
     "regex": "v([\\\\d.]+)"
   },
   "autoupdate": {
