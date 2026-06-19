@@ -65,6 +65,7 @@ func handleErr(err error) {
 
 func init() {
 	rootCmd.AddCommand(configureCmd)
+	rootCmd.AddCommand(integrateCmd)
 	rootCmd.AddCommand(payments.Cmd)
 	rootCmd.AddCommand(orders.Cmd)
 	rootCmd.AddCommand(customers.Cmd)
