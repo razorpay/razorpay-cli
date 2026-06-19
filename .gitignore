@@ -19,5 +19,8 @@ razorpay-cli
 # Generated RPC files (generated from proto source files via buf)
 /rpc
 
+# Environment variables
+.env
+
 # macOS
 .DS_Store
