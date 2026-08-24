@@ -63,6 +63,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup PMG proxy
+        uses: safedep/pmg@v1
+        with:
+          server-mode: true
+          api-key: ${{ secrets.PMG_PUBLIC_REPOS_TOKEN }}
+          tenant-id: ${{ secrets.PMG_TENANT_ID }}
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
@@ -83,6 +90,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GORELEASER_CURRENT_TAG: ${{ github.ref_type == 'tag' && github.ref_name || 'v0.0.0-next' }}
+
+      - name: Enforce PMG policy
+        if: always()
+        run: pmg proxy stop --fail-on-violation
 
 # ---------------------------------------------------------------------------
 # Windows — binary zip archives
@@ -135,6 +146,13 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup PMG proxy
+        uses: safedep/pmg@v1
+        with:
+          server-mode: true
+          api-key: ${{ secrets.PMG_PUBLIC_REPOS_TOKEN }}
+          tenant-id: ${{ secrets.PMG_TENANT_ID }}
 
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
@@ -193,3 +211,7 @@ jobs:
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION} --metadata-directive REPLACE --content-type text/plain
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION} --metadata-directive REPLACE --content-type text/plain
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+
+      - name: Enforce PMG policy
+        if: always()
+        run: pmg proxy stop --fail-on-violation
