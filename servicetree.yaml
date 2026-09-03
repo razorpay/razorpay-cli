@@ -14,7 +14,7 @@ owner:
 
 links:
   repo: "https://github.com/razorpay/razorpay-cli"  # canonical GitHub repo URL
-  alerts_repo:  # this service's alert rules in razorpay/alert-rules — TO FILL: no matching ruleset found; add one in razorpay/alert-rules, then link the file here
+  alerts_repo: "https://github.com/razorpay/alert-rules/blob/master/rules/prod-rules/razorpayx_rules.yaml"  # this service's alert rules in razorpay/alert-rules
   slos:  # SLO definitions — TO FILL: no slo.yaml at this repo root and no sloth ruleset for it under razorpay/alert-rules/slo/prod (the two places SLOs are defined today); add one there and link it here
   slack_channel:  # primary Slack channel for this service — TO FILL: no channel named for razorpay-cli exists in the 36,406-channel index, and every Slack mention of it is a #tech_it access/repo-creation request rather than a home channel. The closest candidate is #platform-developer-experience (158 members, purpose "Channel for all discussions around 'External Developer Experience'"), but it is not service-scoped — confirm with the Razorpay1 POD lead before using it
   zenduty_policy:  # Zenduty policy/service name used for paging — TO FILL: the service-to-policy mapping is not in DevRev or alert-rules for this service; it lives in the external Zenduty policies sheet
@@ -25,6 +25,10 @@ links:
   logs_and_traces: "https://razorpay-prod.app.coralogix.in/#/query-new/archive-logs"  # org-standard prod Coralogix — filter subsystem "razorpay-cli"
   strategy_okr:  # TO FILL: OKRs live in DevRev as custom_object.okr (C-OKR-*) and strategy docs are group-level Google Docs, neither scoped to one service. Link the FY strategy doc for the "Razorpay1" group.
   risk_assessment:  # TO FILL: no .agents/skills/risk-assessment in this repo; add the per-repo risk-assessment skill
-  regions:  # per-region links — TO FILL: no prod region deployment found for this service in spinacode or alert-rules; add a block per geography once it ships
+  regions:  # per-region links; one block per geography this service is deployed in
+    in:  # India · cells: mum-rspl (spinacode) · matched in spinacode under the alias "razorpay", not the repo name
+      dashboard: "https://vajra.razorpay.com/d/Hbp0I3hMk/x-platform-availability?viewPanel=30&orgId=1&from=now-24h&to=now"  # alert-rules vajra_link annotation
+      deployment_pipeline_link: "https://deploy-in.razorpay.com/#/applications/prod-mum-rspl-razorpay-com/executions"  # Spinnaker deployment pipeline for this region — no app named exactly prod-<cell>-razorpay-cli exists in spinacode; this is the closest of 4 (others: prod-mum-rspl-razorpay-home, prod-mum-rspl-razorpay-thankyou, prod-mum-rspl-razorpay-mentorship) — TO VERIFY which one is this repo's primary pipeline
+      alerts_repo: "https://github.com/razorpay/alert-rules/blob/master/rules/prod-rules/razorpayx_rules.yaml"  # this region's ruleset for this service
 
 dependencies: []  # optional, declared service dependencies — TO FILL: shape: - service: <slug> for internal deps, - vendor: <name> for external (gateways, banks)
