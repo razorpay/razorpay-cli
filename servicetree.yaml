@@ -1,0 +1,34 @@
+service: razorpay-cli  # required, canonical slug — immutable once registered
+displayName: "Razorpay CLI"  # required, human-readable name — README title "# Razorpay CLI"; the installed binary is `razorpay`
+description: "Public command-line client for the Razorpay API, letting developers manage payments, orders, customers, invoices, refunds, settlements, disputes, payment links, QR codes, subscriptions, Route and Smart Collect from a terminal."  # required, one-sentence description of what the service does — README ("Command-line interface for the Razorpay API. Manage payments, orders, customers, invoices, refunds, settlements, disputes, payment links, QR codes, subscriptions, Route, and Smart Collect from your terminal") plus its `razorpay configure` / `razorpay orders create` examples
+type: library  # required, one of: service | worker | cron | library | pipeline — a distributed Go binary, not a workload: install script at razorpay.com/cli/latest/install.sh, plus the public razorpay/homebrew-razorpay-cli tap and razorpay/scoop-razorpay-cli bucket fed by its release workflow. No Dockerfile, helm chart, Spinnaker application or Netra deployment. Arpit Bhayani, who requested the repo, states in #tech_it that it "is a Go based CLI, it will not be a service". `library` is the closest enum value — there is no `cli` type · retype after the serviceTypes enum widens: tool
+tier: T2  # required, one of: T0 | T1 | T2 | T3 · Payments Reliability sheet Priority P2 -> T2; kept — nothing is deployed, but it is a publicly shipped, externally installed artifact (Homebrew/Scoop), so a bad release reaches merchants' machines and T3 would understate that
+lifecycle: live  # optional, one of: incubating | live | deprecated | retired (default: live)
+aliases: ["razorpay"]  # other names this service is known by — the installed binary name (`razorpay --version`, /usr/local/bin/razorpay) and the name used in the Homebrew/Scoop package manifests
+
+domain: razorpay1/developer-experience  # required, two-level domain/subgroup slug — family from cache/rel_seed.json l1 "razorpay1" (sheet BU "Razorpay1"), matching .github/repo_owners.json group/sub_group/pod "Razorpay1". No existing razorpay1 area fits an external developer CLI, so "developer-experience" is introduced; note Discover reports the CLI's two distribution repos (homebrew-razorpay-cli, scoop-razorpay-cli) recorded under the PG (Plugins, Checkout) subgroup, so the family may need reconciling with that team
+
+owner:
+  team:  # required, owning team slug — TO FILL: this repo has no CODEOWNERS file, .github/repo_owners.json carries no team slug, and the GitHub repository-teams API is not readable with the current token; ask the POD lead for the owning GitHub team
+  pm:  # product manager — TO FILL: no PM in .github/repo_owners.json, DevRev or the Payments Reliability sheet; the CLI is developer-relations-led. Ask the Razorpay1 POD lead
+
+links:
+  repo: "https://github.com/razorpay/razorpay-cli"  # canonical GitHub repo URL
+  alerts_repo: "https://github.com/razorpay/alert-rules/blob/master/rules/prod-rules/razorpayx_rules.yaml"  # this service's alert rules in razorpay/alert-rules
+  slos:  # SLO definitions — TO FILL: no slo.yaml at this repo root and no sloth ruleset for it under razorpay/alert-rules/slo/prod (the two places SLOs are defined today); add one there and link it here
+  slack_channel:  # primary Slack channel for this service — TO FILL: no channel named for razorpay-cli exists in the 36,406-channel index, and every Slack mention of it is a #tech_it access/repo-creation request rather than a home channel. The closest candidate is #platform-developer-experience (158 members, purpose "Channel for all discussions around 'External Developer Experience'"), but it is not service-scoped — confirm with the Razorpay1 POD lead before using it
+  zenduty_policy:  # Zenduty policy/service name used for paging — TO FILL: the service-to-policy mapping is not in DevRev or alert-rules for this service; it lives in the external Zenduty policies sheet
+  oncall_handle:  # Slack/PagerDuty oncall handle or usergroup — TO FILL: not set on the DevRev runnable
+  runbook:  # link to the incident runbook — TO FILL: no runbook directory for this service in razorpay/rzp-oncall-agent; add one or link the Google Doc / alpha.razorpay.com page
+  api_docs:  # API documentation — TO FILL: no swagger/openapi/proto found in the repo tree; link the API spec or Postman collection
+  dashboard:  # primary dashboard — TO FILL: a client-side binary has no server-side metrics; there is no vajra dashboard and no alert ruleset for it. If adoption needs tracking, link the release-download / install-telemetry dashboard instead
+  logs_and_traces: "https://razorpay-prod.app.coralogix.in/#/query-new/archive-logs"  # org-standard prod Coralogix — filter subsystem "razorpay-cli"
+  strategy_okr:  # TO FILL: link the FY strategy doc for the owning group.
+  risk_assessment:  # TO FILL: no .agents/skills/risk-assessment in this repo; add the per-repo risk-assessment skill
+  regions:  # per-region links; one block per geography this service is deployed in
+    in:  # India · cells: mum-rspl (spinacode) · matched in spinacode under the alias "razorpay", not the repo name
+      dashboard: "https://vajra.razorpay.com/d/Hbp0I3hMk/x-platform-availability?viewPanel=30&orgId=1&from=now-24h&to=now"  # alert-rules vajra_link annotation
+      deployment_pipeline_link: "https://deploy-in.razorpay.com/#/applications/prod-mum-rspl-razorpay-home/executions"  # Spinnaker deployment pipeline for this region — no app named exactly prod-<cell>-razorpay-cli exists in spinacode; this is the closest of 3 (others: prod-mum-rspl-razorpay-thankyou, prod-mum-rspl-razorpay-mentorship) — TO VERIFY which one is this repo's primary pipeline
+      alerts_repo: "https://github.com/razorpay/alert-rules/blob/master/rules/prod-rules/razorpayx_rules.yaml"  # this region's ruleset for this service
+
+dependencies: []  # optional, declared service dependencies — TO FILL: shape: - service: <slug> for internal deps, - vendor: <name> for external (gateways, banks)
