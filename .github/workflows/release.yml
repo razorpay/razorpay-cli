@@ -129,7 +129,16 @@ jobs:
       - release-mac
       - release-linux
       - release-windows
-    if: ${{ always() && (needs.release-mac.result == 'success' || github.event.inputs.republish_version != '') }}
+    # `always()` is needed so the republish path can run without a build, but it
+    # also drops the implicit "all needs succeeded" check -- so each platform is
+    # re-checked explicitly. Promoting a partial build leaves latest/ serving a
+    # mix of versions.
+    if: >-
+      ${{ always() && (
+            (needs.release-mac.result == 'success' &&
+             needs.release-linux.result == 'success' &&
+             needs.release-windows.result == 'success')
+            || github.event.inputs.republish_version != '') }}
     permissions:
       id-token: write
       contents: read
@@ -142,8 +151,9 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-1
 
-      - name: Write latest file and install script to S3
+      - name: Promote release artifacts to latest/
         run: |
+          set -euo pipefail
           if [ -n "${{ github.event.inputs.republish_version }}" ]; then
             VERSION="v${{ github.event.inputs.republish_version }}"
           elif [ "${{ github.ref_type }}" = "tag" ]; then
@@ -155,12 +165,7 @@ jobs:
           BUCKET="rzp-1415-prod-docs-website"
           REGION="ap-south-1"
 
-          # Write version marker and install script
-          echo "${VERSION}" | aws s3 cp - \
-            s3://${BUCKET}/cli/latest/version \
-            --content-type text/plain \
-            --region ${REGION}
-
+          # Install script
           aws s3 cp install.sh \
             s3://${BUCKET}/cli/${VERSION_NUM}/install.sh \
             --content-type text/x-shellscript \
@@ -189,7 +194,60 @@ jobs:
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_x86_64.zip    s3://${BUCKET}/cli/latest/razorpay_windows_x86_64.zip    --region ${REGION} --metadata-directive REPLACE --content-type application/zip
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay_${VERSION_NUM}_windows_i386.zip      s3://${BUCKET}/cli/latest/razorpay_windows_i386.zip      --region ${REGION} --metadata-directive REPLACE --content-type application/zip
 
-          # Checksums
+          # Checksums -- promoted before the version marker so the two can never disagree
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-mac-checksums.txt     s3://${BUCKET}/cli/latest/razorpay-mac-checksums.txt     --region ${REGION} --metadata-directive REPLACE --content-type text/plain
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-linux-checksums.txt   s3://${BUCKET}/cli/latest/razorpay-linux-checksums.txt   --region ${REGION} --metadata-directive REPLACE --content-type text/plain
           aws s3 cp s3://${BUCKET}/cli/${VERSION_NUM}/razorpay-windows-checksums.txt s3://${BUCKET}/cli/latest/razorpay-windows-checksums.txt --region ${REGION} --metadata-directive REPLACE --content-type text/plain
+
+          # ---------------------------------------------------------------
+          # Verify what was just promoted, before advertising it. Catches a
+          # partial or stale promotion instead of leaving latest/ inconsistent.
+          # ---------------------------------------------------------------
+          VERIFY_DIR="$(mktemp -d)"
+          trap 'rm -rf "${VERIFY_DIR}"' EXIT
+
+          verify() {
+            latest_name="$1"
+            versioned_name="$2"
+            checksums="$3"
+
+            aws s3 cp "s3://${BUCKET}/cli/latest/${latest_name}" "${VERIFY_DIR}/${latest_name}" --region ${REGION} --only-show-errors
+            aws s3 cp "s3://${BUCKET}/cli/latest/${checksums}" "${VERIFY_DIR}/${checksums}" --region ${REGION} --only-show-errors
+
+            expected="$(awk -v name="${versioned_name}" '$2 == name { print $1 }' "${VERIFY_DIR}/${checksums}")"
+            actual="$(sha256sum "${VERIFY_DIR}/${latest_name}" | awk '{ print $1 }')"
+
+            if [ -z "${expected}" ]; then
+              echo "::error::${checksums} has no entry for ${versioned_name}"
+              exit 1
+            fi
+            if [ "${expected}" != "${actual}" ]; then
+              echo "::error::latest/${latest_name} does not match ${versioned_name} (expected ${expected}, got ${actual})"
+              exit 1
+            fi
+            echo "  verified  latest/${latest_name}"
+          }
+
+          echo "Verifying promoted artifacts against the promoted checksums..."
+          verify "razorpay_mac-os_arm64.tar.gz" "razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz" "razorpay-mac-checksums.txt"
+          verify "razorpay_mac-os_x86_64.tar.gz" "razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz" "razorpay-mac-checksums.txt"
+          verify "razorpay_linux_x86_64.tar.gz" "razorpay_${VERSION_NUM}_linux_x86_64.tar.gz" "razorpay-linux-checksums.txt"
+          verify "razorpay_linux_arm64.tar.gz" "razorpay_${VERSION_NUM}_linux_arm64.tar.gz" "razorpay-linux-checksums.txt"
+          verify "razorpay_linux_amd64.deb" "razorpay_${VERSION_NUM}_linux_amd64.deb" "razorpay-linux-checksums.txt"
+          verify "razorpay_linux_arm64.deb" "razorpay_${VERSION_NUM}_linux_arm64.deb" "razorpay-linux-checksums.txt"
+          verify "razorpay_linux_amd64.rpm" "razorpay_${VERSION_NUM}_linux_amd64.rpm" "razorpay-linux-checksums.txt"
+          verify "razorpay_linux_arm64.rpm" "razorpay_${VERSION_NUM}_linux_arm64.rpm" "razorpay-linux-checksums.txt"
+          verify "razorpay_windows_x86_64.zip" "razorpay_${VERSION_NUM}_windows_x86_64.zip" "razorpay-windows-checksums.txt"
+          verify "razorpay_windows_i386.zip" "razorpay_${VERSION_NUM}_windows_i386.zip" "razorpay-windows-checksums.txt"
+
+          # ---------------------------------------------------------------
+          # Version marker LAST. Nothing may advertise a version until every
+          # artifact for it is promoted and verified -- install.sh and the
+          # package-manager scripts both read this to decide what "latest" is.
+          # ---------------------------------------------------------------
+          echo "${VERSION}" | aws s3 cp - \
+            s3://${BUCKET}/cli/latest/version \
+            --content-type text/plain \
+            --region ${REGION}
+
+          echo "Promoted ${VERSION} to cli/latest/."
