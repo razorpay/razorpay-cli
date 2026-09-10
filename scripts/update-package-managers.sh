@@ -17,6 +17,13 @@ set -euo pipefail
 # Config
 # ---------------------------------------------------------------------------
 BASE_URL="https://razorpay.com/cli"
+
+# Artifacts are pinned by SHA-256 in both manifests, so they must come from an
+# immutable URL. BASE_URL/latest/ is overwritten on every release, which would
+# invalidate the pinned hash the moment the next version ships; GitHub release
+# assets are per-tag and never change.
+RELEASE_BASE="https://github.com/razorpay/razorpay-cli/releases/download"
+
 HOMEBREW_REPO="git@github.com:razorpay/homebrew-razorpay-cli.git"
 SCOOP_REPO="git@github.com:razorpay/scoop-razorpay-cli.git"
 
@@ -45,27 +52,88 @@ echo "==> Updating package managers for version ${VERSION_NUM}"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "${TMPDIR}"' EXIT
 
-echo "==> Downloading checksums..."
-curl -fsSL "${BASE_URL}/latest/razorpay-mac-checksums.txt" -o "${TMPDIR}/mac-checksums.txt"
-curl -fsSL "${BASE_URL}/latest/razorpay-windows-checksums.txt" -o "${TMPDIR}/windows-checksums.txt"
+# Read the checksums for the tag being published rather than from latest/. The
+# version is resolved from latest/version but the hashes must describe *that*
+# version, and the two prefixes can drift apart during a partial promotion.
+echo "==> Downloading checksums for v${VERSION_NUM}..."
+curl -fsSL "${RELEASE_BASE}/v${VERSION_NUM}/razorpay-mac-checksums.txt" -o "${TMPDIR}/mac-checksums.txt"
+curl -fsSL "${RELEASE_BASE}/v${VERSION_NUM}/razorpay-windows-checksums.txt" -o "${TMPDIR}/windows-checksums.txt"
 
 # ---------------------------------------------------------------------------
 # Extract SHA256 hashes
 # ---------------------------------------------------------------------------
+# Match the whole filename. A substring match would silently return two hashes
+# on separate lines if a future archive name ever contained another as a suffix.
 get_sha() {
-  local file="$1" checksums="$2"
-  grep "${file}" "${checksums}" | awk '{print $1}'
+  local file="$1" checksums="$2" sha
+  sha=$(awk -v name="${file}" '$2 == name { print $1 }' "${checksums}")
+  if [[ -z "${sha}" ]]; then
+    echo "ERROR: ${checksums##*/} has no entry for ${file}" >&2
+    exit 1
+  fi
+  echo "${sha}"
 }
 
-MAC_ARM64_SHA=$(get_sha "mac-os_arm64.tar.gz" "${TMPDIR}/mac-checksums.txt")
-MAC_AMD64_SHA=$(get_sha "mac-os_x86_64.tar.gz" "${TMPDIR}/mac-checksums.txt")
-WIN_AMD64_SHA=$(get_sha "windows_x86_64.zip" "${TMPDIR}/windows-checksums.txt")
-WIN_I386_SHA=$(get_sha "windows_i386.zip" "${TMPDIR}/windows-checksums.txt")
+MAC_ARM64_FILE="razorpay_${VERSION_NUM}_mac-os_arm64.tar.gz"
+MAC_AMD64_FILE="razorpay_${VERSION_NUM}_mac-os_x86_64.tar.gz"
+WIN_AMD64_FILE="razorpay_${VERSION_NUM}_windows_x86_64.zip"
+WIN_I386_FILE="razorpay_${VERSION_NUM}_windows_i386.zip"
+
+MAC_ARM64_SHA=$(get_sha "${MAC_ARM64_FILE}" "${TMPDIR}/mac-checksums.txt")
+MAC_AMD64_SHA=$(get_sha "${MAC_AMD64_FILE}" "${TMPDIR}/mac-checksums.txt")
+WIN_AMD64_SHA=$(get_sha "${WIN_AMD64_FILE}" "${TMPDIR}/windows-checksums.txt")
+WIN_I386_SHA=$(get_sha "${WIN_I386_FILE}" "${TMPDIR}/windows-checksums.txt")
 
 echo "  mac arm64:     ${MAC_ARM64_SHA}"
 echo "  mac x86_64:    ${MAC_AMD64_SHA}"
 echo "  win x86_64:    ${WIN_AMD64_SHA}"
 echo "  win i386:      ${WIN_I386_SHA}"
+
+# ---------------------------------------------------------------------------
+# Verify every URL that is about to be pinned
+#
+# The manifests pin a hash to a URL. If the two ever disagree, `brew install`
+# and `scoop install` fail outright for everyone, so confirm here -- before a
+# PR is opened -- that each URL resolves and serves exactly the bytes whose
+# hash is going into the manifest.
+# ---------------------------------------------------------------------------
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{ print $1 }'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{ print $1 }'
+  else
+    echo "ERROR: neither sha256sum nor shasum is available." >&2
+    exit 1
+  fi
+}
+
+verify_pinned_url() {
+  local url="$1" expected="$2" out actual
+  out="${TMPDIR}/$(basename "${url}")"
+
+  if ! curl -fsSL "${url}" -o "${out}"; then
+    echo "ERROR: ${url} did not resolve." >&2
+    echo "       Release assets are published by .goreleaser/*.yml; check the tag was built." >&2
+    exit 1
+  fi
+
+  actual=$(sha256_of "${out}")
+  if [[ "${expected}" != "${actual}" ]]; then
+    echo "ERROR: ${url}" >&2
+    echo "       expected ${expected}" >&2
+    echo "       actual   ${actual}" >&2
+    echo "       Refusing to generate a manifest that cannot install." >&2
+    exit 1
+  fi
+  echo "  ok  $(basename "${url}")"
+}
+
+echo "==> Verifying pinned URLs..."
+verify_pinned_url "${RELEASE_BASE}/v${VERSION_NUM}/${MAC_ARM64_FILE}" "${MAC_ARM64_SHA}"
+verify_pinned_url "${RELEASE_BASE}/v${VERSION_NUM}/${MAC_AMD64_FILE}" "${MAC_AMD64_SHA}"
+verify_pinned_url "${RELEASE_BASE}/v${VERSION_NUM}/${WIN_AMD64_FILE}" "${WIN_AMD64_SHA}"
+verify_pinned_url "${RELEASE_BASE}/v${VERSION_NUM}/${WIN_I386_FILE}" "${WIN_I386_SHA}"
 
 # ---------------------------------------------------------------------------
 # Generate Homebrew formula
@@ -88,10 +156,10 @@ class Razorpay < Formula
 
   on_macos do
     if Hardware::CPU.arm?
-      url "${BASE_URL}/latest/razorpay_mac-os_arm64.tar.gz"
+      url "${RELEASE_BASE}/v${VERSION_NUM}/${MAC_ARM64_FILE}"
       sha256 "${MAC_ARM64_SHA}"
     else
-      url "${BASE_URL}/latest/razorpay_mac-os_x86_64.tar.gz"
+      url "${RELEASE_BASE}/v${VERSION_NUM}/${MAC_AMD64_FILE}"
       sha256 "${MAC_AMD64_SHA}"
     end
   end
@@ -130,11 +198,11 @@ cat > "${SCOOP_DIR}/razorpay.json" <<JSON
   "license": "MIT",
   "architecture": {
     "64bit": {
-      "url": "${BASE_URL}/latest/razorpay_windows_x86_64.zip",
+      "url": "${RELEASE_BASE}/v${VERSION_NUM}/${WIN_AMD64_FILE}",
       "hash": "${WIN_AMD64_SHA}"
     },
     "32bit": {
-      "url": "${BASE_URL}/latest/razorpay_windows_i386.zip",
+      "url": "${RELEASE_BASE}/v${VERSION_NUM}/${WIN_I386_FILE}",
       "hash": "${WIN_I386_SHA}"
     }
   },
@@ -146,11 +214,14 @@ cat > "${SCOOP_DIR}/razorpay.json" <<JSON
   "autoupdate": {
     "architecture": {
       "64bit": {
-        "url": "${BASE_URL}/latest/razorpay_windows_x86_64.zip"
+        "url": "${RELEASE_BASE}/v\$version/razorpay_\$version_windows_x86_64.zip"
       },
       "32bit": {
-        "url": "${BASE_URL}/latest/razorpay_windows_i386.zip"
+        "url": "${RELEASE_BASE}/v\$version/razorpay_\$version_windows_i386.zip"
       }
+    },
+    "hash": {
+      "url": "${RELEASE_BASE}/v\$version/razorpay-windows-checksums.txt"
     }
   }
 }
