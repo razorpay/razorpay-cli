@@ -10,7 +10,7 @@ Install the latest release for your platform:
 curl -fsSL https://razorpay.com/cli/latest/install.sh | bash
 ```
 
-The script downloads the right tarball for your OS/arch, extracts the `razorpay` binary, and places it at `/usr/local/bin/razorpay`. Confirm the install:
+The script downloads the right tarball for your OS/arch, extracts the `razorpay` binary, and places it at `~/.local/bin/razorpay`. If that directory is not already on your `PATH`, the script appends it to your shell profile — open a new terminal, or `source` the profile, before the command resolves. Confirm the install:
 
 ```bash
 $ razorpay --version
