@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -36,23 +37,63 @@ type Client struct {
 	keyID     string
 	keySecret string
 	baseURL   string
+	baseErr   error
 	http      *http.Client
 }
 
 func New(keyID, keySecret string) *Client {
-	base := os.Getenv("RAZORPAY_BASE_URL")
-	if base == "" {
-		base = defaultBaseURL
-	}
+	base, err := resolveBaseURL()
 	return &Client{
 		keyID:     keyID,
 		keySecret: keySecret,
 		baseURL:   base,
+		baseErr:   err,
 		http:      &http.Client{Timeout: 30 * time.Second},
 	}
 }
 
-func (c *Client) requireAuth() error {
+// resolveBaseURL returns the API base URL, honouring the RAZORPAY_BASE_URL
+// override. The override is useful for pointing the CLI at a local or staging
+// endpoint, but every request carries the API key in an Authorization header,
+// so the override is validated and is never applied silently.
+func resolveBaseURL() (string, error) {
+	override := strings.TrimSpace(os.Getenv("RAZORPAY_BASE_URL"))
+	if override == "" {
+		return defaultBaseURL, nil
+	}
+
+	u, err := url.Parse(override)
+	if err != nil {
+		return "", fmt.Errorf("RAZORPAY_BASE_URL %q is not a valid URL: %w", override, err)
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return "", fmt.Errorf("RAZORPAY_BASE_URL %q must include a scheme and host, e.g. https://api.razorpay.com", override)
+	}
+	// Plain HTTP would put the API key on the wire in cleartext. Loopback is
+	// allowed so the endpoint can be pointed at a local test server.
+	if u.Scheme != "https" && !isLoopback(u.Hostname()) {
+		return "", fmt.Errorf("RAZORPAY_BASE_URL %q uses %s; only https is accepted for non-loopback hosts, because API credentials are sent with every request", override, u.Scheme)
+	}
+
+	base := strings.TrimSuffix(override, "/")
+	fmt.Fprintln(os.Stderr, "warning: RAZORPAY_BASE_URL is set — sending API requests to "+base+" instead of "+defaultBaseURL)
+	return base, nil
+}
+
+func isLoopback(host string) bool {
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// preflight reports whether the client is safe to send a request with: the
+// endpoint must be valid and the credentials must be present.
+func (c *Client) preflight() error {
+	if c.baseErr != nil {
+		return c.baseErr
+	}
 	if c.keyID == "" || c.keySecret == "" {
 		return fmt.Errorf("API credentials not configured; run 'razorpay configure' or set the RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables")
 	}
@@ -64,7 +105,7 @@ func (c *Client) do(method, path string, body interface{}, query url.Values) ([]
 }
 
 func (c *Client) doWithHeaders(method, path string, body interface{}, query url.Values, extraHeaders map[string]string) ([]byte, error) {
-	if err := c.requireAuth(); err != nil {
+	if err := c.preflight(); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +183,7 @@ func (c *Client) PostWithHeaders(path string, body interface{}, headers map[stri
 
 // PostMultipart uploads a file and additional form fields using multipart/form-data.
 func (c *Client) PostMultipart(path string, filePath string, fields map[string]string) ([]byte, error) {
-	if err := c.requireAuth(); err != nil {
+	if err := c.preflight(); err != nil {
 		return nil, err
 	}
 
