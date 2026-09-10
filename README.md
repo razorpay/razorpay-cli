@@ -205,9 +205,8 @@ cmd/
 api/                 HTTP client — auth, JSON pretty-print, multipart upload
 config/              config file + env-var loader (viper)
 tests/               end-to-end test suite (build tag `e2e`)
-docs/                per-resource usage guides
+docs/                installation guide
 install.sh           platform installer
-AGENTS.md            agent guidance for this repo
 CHANGELOG.md         release notes
 ```
 
@@ -241,6 +240,7 @@ See [tests/README.md](tests/README.md) for the layout of the test suite and how 
 ## Documentation
 
 - [docs/install.md](docs/install.md) — platform-specific install
-- Per-resource guides: [payments](docs/payments.md) · [orders](docs/orders.md) · [customers](docs/customers.md) · [refunds](docs/refunds.md) · [settlements](docs/settlements.md) · [disputes](docs/disputes.md)
 - [CHANGELOG.md](CHANGELOG.md) — release notes
-- [AGENTS.md](AGENTS.md) — agent guidance for working in this repository
+- [Razorpay API reference](https://razorpay.com/docs/api/) — field-level reference for every endpoint the CLI wraps
+
+For per-command usage, run `razorpay <group> --help` — for example `razorpay payments --help`. Every command lists its flags, defaults and accepted values.
