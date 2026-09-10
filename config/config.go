@@ -78,5 +78,17 @@ func Save(keyID, keySecret string) error {
 
 	viper.Set("key_id", keyID)
 	viper.Set("key_secret", keySecret)
-	return viper.WriteConfigAs(filepath.Join(dir, configFile+"."+configType))
+
+	// This file holds a live API key secret. Viper defaults to 0644, which
+	// leaves it readable by every user on the machine.
+	viper.SetConfigPermissions(0600)
+
+	path := filepath.Join(dir, configFile+"."+configType)
+	if err := viper.WriteConfigAs(path); err != nil {
+		return err
+	}
+
+	// OpenFile only applies the mode when it creates the file, so a config
+	// written by an older version keeps its original 0644. Narrow it here.
+	return os.Chmod(path, 0600)
 }
