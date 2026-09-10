@@ -70,7 +70,12 @@ snapshot:
   version_template: "{{ .Version }}-next"
 
 release:
-  disable: true
+  # Attach archives and checksums to the GitHub release for the tag. These
+  # URLs are immutable, which is what the Homebrew formula and Scoop manifest
+  # pin their SHA-256 against -- the cli/latest/ prefix is overwritten on every
+  # release and cannot be pinned. mac, linux and windows each run GoReleaser
+  # separately against the same tag, so append rather than replace.
+  mode: append
 
 blobs:
   - provider: s3
